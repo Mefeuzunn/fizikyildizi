@@ -382,19 +382,9 @@ input, textarea, select {
   top: 5rem; 
 }
 
-/* Ad Placement Styling - Premium 2026 Ready */
+/* Ad Placement Styling - Clean Production Ready */
 .ad-container {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px dashed var(--border);
-  color: var(--text-muted);
-  font-size: 0.7rem;
-  letter-spacing: 0.1em;
-  font-weight: 800;
-  text-transform: uppercase;
-  border-radius: 16px;
+  display: block;
   overflow: hidden;
   position: relative;
   transition: all var(--transition-normal);
@@ -402,18 +392,11 @@ input, textarea, select {
 }
 
 .ad-container::before {
-  content: "REKLAM";
-  position: absolute;
-  top: 8px;
-  right: 12px;
-  font-size: 0.6rem;
-  opacity: 0.4;
-  pointer-events: none;
+  display: none;
 }
 
 .dark .ad-container {
-  background: rgba(0, 0, 0, 0.2);
-  border-color: rgba(255, 255, 255, 0.1);
+  background: transparent;
 }
 
 .ad-skyscraper {
