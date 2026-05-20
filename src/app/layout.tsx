@@ -27,12 +27,12 @@ export const viewport = {
 };
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://kalkula.com"),
+  metadataBase: new URL("https://kalkula.com.tr"),
   title: {
     default: "Kalkula | Türkiye'nin En Kapsamlı Hesaplama Platformu",
     template: "%s | Kalkula"
   },
-  description: "Kalkula ile finans, eğitim, sağlık, vergi ve daha fazlasını kapsayan 60+ ücretsiz hesaplama aracı, not defteri, takvim ve belge dönüştürücü tek platformda.",
+  description: "Kalkula ile finans, eğitim, health, vergi ve daha fazlasını kapsayan 60+ ücretsiz hesaplama aracı, not defteri, takvim ve belge dönüştürücü tek platformda.",
   keywords: ["hesaplama", "hesap makinesi", "kredi hesaplama", "vergi hesaplama", "kalkula", "birim dönüştürücü"],
   alternates: {
     canonical: "/",
@@ -40,7 +40,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Kalkula | Türkiye'nin En Kapsamlı Hesaplama Platformu",
     description: "160+ profesyonel hesaplama aracı tek platformda.",
-    url: "https://kalkula.com",
+    url: "https://kalkula.com.tr",
     siteName: "Kalkula",
     locale: "tr_TR",
     type: "website",
@@ -58,12 +58,12 @@ export default function RootLayout({
     "@context": "https://schema.org",
     "@type": "WebSite",
     "name": "Kalkula",
-    "url": "https://kalkula.com",
+    "url": "https://kalkula.com.tr",
     "potentialAction": {
       "@type": "SearchAction",
       "target": {
         "@type": "EntryPoint",
-        "urlTemplate": "https://kalkula.com/ara?q={search_term_string}"
+        "urlTemplate": "https://kalkula.com.tr/ara?q={search_term_string}"
       },
       "query-input": "required name=search_term_string"
     }

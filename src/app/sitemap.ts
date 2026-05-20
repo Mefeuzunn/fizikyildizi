@@ -1,7 +1,7 @@
 import { MetadataRoute } from "next";
 import { calculators, categories } from "@/data/calculators";
 
-const BASE_URL = "https://kalkula.com";
+const BASE_URL = "https://kalkula.com.tr";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const now = new Date();

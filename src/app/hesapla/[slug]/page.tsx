@@ -37,12 +37,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     title: `${calc.title} Hesaplama`,
     description: calc.description,
     alternates: {
-      canonical: `https://kalkula.com/hesapla/${slug}`,
+      canonical: `https://kalkula.com.tr/hesapla/${slug}`,
     },
     openGraph: {
       title: `${calc.title} | Kalkula`,
       description: calc.description,
-      url: `https://kalkula.com/hesapla/${slug}`,
+      url: `https://kalkula.com.tr/hesapla/${slug}`,
     },
     keywords: [
       calc.title,

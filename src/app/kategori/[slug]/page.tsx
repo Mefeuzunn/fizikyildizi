@@ -28,12 +28,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     title: `${category.name} Hesaplamaları`,
     description: category.description,
     alternates: {
-      canonical: `https://kalkula.com/kategori/${slug}`,
+      canonical: `https://kalkula.com.tr/kategori/${slug}`,
     },
     openGraph: {
       title: `${category.name} Hesaplamaları | Kalkula`,
       description: category.description,
-      url: `https://kalkula.com/kategori/${slug}`,
+      url: `https://kalkula.com.tr/kategori/${slug}`,
     },
   };
 }

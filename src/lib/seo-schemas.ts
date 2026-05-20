@@ -1,6 +1,6 @@
 import type { CalculatorInfo, Category } from "@/data/calculators";
 
-const BASE_URL = "https://kalkula.com";
+const BASE_URL = "https://kalkula.com.tr";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
