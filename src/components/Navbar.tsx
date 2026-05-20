@@ -75,32 +75,14 @@ export default function Navbar() {
       <div className={`container ${styles.navContainer}`}>
         {/* Logo */}
         <Link href="/" className={styles.logo}>
-          <div className={styles.logoIcon} style={{ 
-            background: "linear-gradient(135deg, var(--accent-primary) 0%, #1d4ed8 100%)",
-            borderRadius: "8px",
-            width: "32px",
-            height: "32px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            boxShadow: "0 4px 12px var(--accent-primary-glow)"
-          }}>
+          <div className={styles.logoIcon}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                <path d="M7 6v12M17 6l-7 6 7 6" stroke="white" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </div>
-          <span className={styles.logoText} style={{ 
-            fontSize: "1.5rem",
-            fontWeight: 900,
-            background: "linear-gradient(to bottom, #ffffff 30%, #cbd5e1 100%)",
-            WebkitBackgroundClip: "text",
-            WebkitTextFillColor: "transparent",
-            textShadow: "0 4px 15px rgba(0,0,0,0.25)",
-            lineHeight: 1,
-            letterSpacing: "-0.05em"
-          }}>Kalkula</span>
+          <span className={styles.logoText}>Kalkula</span>
         </Link>
-        <div style={{ flex: 1, display: "flex", justifyContent: "center" }}>
+        <div className={styles.searchMiddle}>
           {/* Mobile Search Trigger Button (The one circled by user) */}
           <button 
             className={styles.mobileSearchTrigger}
@@ -135,7 +117,7 @@ export default function Navbar() {
                 ×
               </button>
             ) : (
-               <div style={{ position: "absolute", right: "12px", fontSize: "0.75rem", background: "var(--surface)", border: "1px solid var(--border)", padding: "2px 6px", borderRadius: "4px", color: "var(--text-muted)", pointerEvents: "none", fontWeight: 600 }}>
+               <div className={styles.cmdBadge}>
                   ⌘K
                </div>
             )}
@@ -191,7 +173,7 @@ export default function Navbar() {
       {showMobileSearch && (
         <div className={styles.mobileSearchOverlay}>
           <div className={styles.mobileSearchHeader}>
-            <div className={styles.searchBox} style={{ flex: 1 }}>
+            <div className={`${styles.searchBox} ${styles.mobileInputWrapper}`}>
               <svg className={styles.searchIcon} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                 <circle cx="11" cy="11" r="8"></circle>
                 <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
@@ -238,7 +220,7 @@ export default function Navbar() {
       {mobileMenuOpen && (
         <div className={styles.mobileMenu}>
           <div className={styles.mobileSearchWrapper}>
-            <div className={styles.searchBox} style={{ width: "100%" }}>
+            <div className={`${styles.searchBox} ${styles.mobileMenuSearchBox}`}>
               <svg className={styles.searchIcon} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <circle cx="11" cy="11" r="8"></circle>
                 <line x1="21" y1="21" x2="16.65" y2="16.65"></line>

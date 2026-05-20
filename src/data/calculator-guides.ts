@@ -408,6 +408,182 @@ export const calculatorGuides: CalculatorGuideMap = {
       },
     ],
   },
+
+  "ihtiyac-kredisi": {
+    what: `İhtiyaç kredisi, bireylerin eğitim, seyahat, tadilat veya acil nakit ihtiyacı gibi kişisel harcamalarını finanse etmek amacıyla bankalardan kullandıkları teminatsız bir tüketici kredisidir. Konut veya taşıt kredisinin aksine, kredi tutarı herhangi bir varlığa bağlı değildir ve kullanım amacı serbesttir.`,
+    how: `Hesaplama, Fransız amortismanı (eşit taksit) yöntemiyle yapılır. Aylık taksit formülü: M = P × [r(1+r)ⁿ] / [(1+r)ⁿ - 1]. Anapara (P), aylık faiz oranı (r) ve vade sayısı (n) girilerek toplam geri ödeme ve faiz tutarı bulunur. KKDF (%15) ve BSMV (%10) faiz üzerine eklenerek gerçek maliyet hesaplanır.`,
+    why: `İhtiyaç kredisi faiz oranları bankadan bankaya büyük farklılık gösterebilir. Kredi almadan önce farklı vade ve oran senaryolarını simüle etmek, toplam maliyeti minimize etmenin ve bütçe planlamasının en etkili yoludur.`,
+    faq: [
+      { q: "İhtiyaç kredisi için minimum gelir şartı var mı?", a: "Evet. Bankalar genellikle asgari ücretin belirli bir katı kadar gelir belgelendirmesi ister. Her bankanın kendi limit politikası vardır." },
+      { q: "KKDF ve BSMV nedir?", a: "KKDF (Kaynak Kullanımını Destekleme Fonu) ve BSMV (Banka ve Sigorta Muameleleri Vergisi), kredi faizi üzerine eklenen yasal kesintilerdir. Toplam maliyeti yaklaşık %15 artırırlar." },
+      { q: "Kredi notu düşükse ihtiyaç kredisi alabilir miyim?", a: "Düşük kredi notu (Findeks skoru) onay şansını azaltır ve daha yüksek faiz oranıyla karşılaşmanıza neden olabilir. Kredi notunuzu yükseltmek için mevcut borçlarınızı düzenli ödemeniz önerilir." },
+    ],
+  },
+
+  "konut-kredisi": {
+    what: `Konut kredisi (mortgage), ev satın almak veya inşa ettirmek isteyen bireylerin bankalardan uzun vadeli ve taşınmaz teminatlı olarak kullandığı bir kredi türüdür. Türkiye'de konut kredisi vadeleri 120 aya (10 yıl) kadar uzayabilir ve taşınmaz üzerine ipotek tesis edilir.`,
+    how: `Konut kredisi hesaplamasında anapara, yıllık faiz oranı ve vade (ay) girilir. Eşit taksit formülü uygulanarak aylık ödeme bulunur. Ek olarak; dosya masrafı, ekspertiz ücreti, DASK (zorunlu deprem sigortası) ve ipotek tesis harcı gibi yan maliyetler toplam maliyete eklenir.`,
+    why: `Konut kredisi, çoğu insanın hayatındaki en büyük finansal taahhüttür. 1 puanlık faiz farkı bile 10 yıllık vadede on binlerce TL fark yaratabilir. Bu nedenle farklı bankaların tekliflerini detaylı karşılaştırmak kritik önem taşır.`,
+    faq: [
+      { q: "Konut kredisinde peşinat zorunlu mu?", a: "Evet. Bankalar genellikle konut değerinin en az %20'si kadar peşinat ister. Kalan %80'lik kısım kredi olarak kullandırılır." },
+      { q: "Sabit faiz mi değişken faiz mi tercih etmeliyim?", a: "Sabit faiz, taksit tutarınızın vade boyunca değişmemesini sağlar. Değişken faiz başlangıçta düşük olabilir ancak piyasa koşullarına göre artabilir. Türkiye'de çoğunlukla sabit faizli konut kredisi tercih edilmektedir." },
+      { q: "DASK sigortası ne kadar tutar?", a: "DASK primi; konutun bulunduğu il, yapı tarzı ve metrekareye göre değişir. Yıllık 200–1.500 TL arasında değişebilir ve konut kredisi için zorunludur." },
+    ],
+  },
+
+  "faiz": {
+    what: `Faiz hesaplama, belirli bir anapara tutarının belirli bir süre ve oran dahilinde ürettiği getiriyi veya borçlanma maliyetini bulmak için kullanılan temel finansal işlemdir. Vadeli mevduat, kredi ve yatırım kararlarının matematiksel temelini oluşturur.`,
+    how: `Basit faiz formülü: Faiz = Anapara × Oran × Süre. Bileşik faiz formülü: Gelecek Değer = Anapara × (1 + r)ⁿ. Vadeli mevduatta brüt faiz üzerinden stopaj (%15 TL, %0 döviz) düşülerek net getiriye ulaşılır.`,
+    why: `Faiz oranını doğru hesaplamak; tasarruflarınızın gerçek getirisini, kredinizin gerçek maliyetini ve yatırım alternatiflerinin karşılaştırmasını sağlar. Net ve brüt getiri arasındaki farkı bilmemek, yanıltıcı kararlar almanıza yol açabilir.`,
+    faq: [
+      { q: "Basit faiz ile bileşik faiz arasındaki fark nedir?", a: "Basit faizde getiri yalnızca anaparaya uygulanır. Bileşik faizde ise her dönemin faizi anaparaya eklenir ve sonraki dönemde bu yeni toplam üzerinden faiz işler. Uzun vadede bileşik faiz önemli ölçüde daha yüksek getiri sağlar." },
+      { q: "Vadeli mevduat faizinden vergi kesilir mi?", a: "Evet. TL vadeli mevduattan %15, döviz mevduatından %25 oranında stopaj (gelir vergisi kesintisi) uygulanır." },
+      { q: "Faiz oranları neye göre belirlenir?", a: "TCMB politika faizi, enflasyon beklentileri ve piyasa koşulları bankaların mevduat ve kredi faiz oranlarını doğrudan etkiler." },
+    ],
+  },
+
+  "vadeli-mevduat": {
+    what: `Vadeli mevduat, belirli bir süre boyunca bankaya yatırılan paranın önceden belirlenen bir faiz oranıyla değerlendirildiği, en yaygın ve düşük riskli yatırım aracıdır. Vade sonunda anapara ve faiz birlikte hesaba aktarılır.`,
+    how: `Net getiri = Anapara × (Yıllık Faiz Oranı / 365) × Gün Sayısı × (1 - Stopaj Oranı). Aracımız girilen tutara, vadeye ve faiz oranına göre hem brüt hem net getiriyi hesaplar. Kırık vade (32, 60, 90, 180 gün vb.) seçenekleri desteklenir.`,
+    why: `Vadeli mevduat en güvenli yatırım aracı olmakla birlikte, enflasyonun altında kalan faiz oranları reel kayba yol açabilir. Farklı vade ve oran senaryolarını karşılaştırarak paranızın gerçek büyümesini önceden görmek önemlidir.`,
+    faq: [
+      { q: "Vadeli mevduatı vadesinden önce bozabilir miyim?", a: "Evet, ancak vadesinden önce bozulursa banka cari faiz oranı (genellikle çok düşük) uygular ve beklenen getirinin büyük kısmını kaybedersiniz." },
+      { q: "Mevduat sigortası limiti nedir?", a: "TMSF (Tasarruf Mevduatı Sigorta Fonu) kapsamında kişi başına banka başına 150.000 TL'ye kadar mevduat güvence altındadır." },
+      { q: "KKM (Kur Korumalı Mevduat) ile vadeli mevduat arasındaki fark nedir?", a: "KKM'de vade sonunda TL faizi ile döviz kuru artışından hangisi yüksekse o ödenir. Vadeli mevduatta ise yalnızca sabit TL faizi uygulanır." },
+    ],
+  },
+
+  "gebelik": {
+    what: `Gebelik hesaplama, son adet tarihinden (SAT) yola çıkarak tahmini doğum tarihini, mevcut gebelik haftasını ve trimester bilgisini hesaplayan bir sağlık aracıdır. Hesaplama Naegele kuralına dayanır.`,
+    how: `Naegele kuralı: Son adet tarihine 7 gün eklenir, 3 ay çıkarılır ve 1 yıl eklenir. Örneğin SAT 1 Ocak ise tahmini doğum 8 Ekim olur. Normal gebelik süresi 280 gün (40 hafta) olarak kabul edilir. Aracımız hafta ve gün bazında detaylı bilgi verir.`,
+    why: `Gebelik haftasını bilmek, doğum öncesi kontrollerin zamanlaması, ultrason takvimleri ve olası komplikasyonların erken tespiti açısından hayati önem taşır. Doğru hesaplama, sağlık profesyonellerinin takip planı oluşturmasını kolaylaştırır.`,
+    faq: [
+      { q: "Tahmini doğum tarihi kesin midir?", a: "Hayır. Tahmini doğum tarihi bir yaklaşımdır; bebeklerin yalnızca %5'i tam hesaplanan tarihte doğar. Normal doğum 37-42. haftalar arasında gerçekleşebilir." },
+      { q: "Son adet tarihimi bilmiyorsam ne yapmalıyım?", a: "İlk trimesterde yapılan ultrason ölçümü ile gebelik haftası yüksek doğrulukla belirlenebilir. Doktorunuzla görüşmeniz önerilir." },
+      { q: "Trimester nedir?", a: "Gebelik 3 trimestere ayrılır: 1. trimester (0-13 hafta), 2. trimester (14-27 hafta), 3. trimester (28-40 hafta). Her dönemde farklı gelişimsel süreçler ve kontroller önem kazanır." },
+    ],
+  },
+
+  "su-ihtiyaci": {
+    what: `Günlük su ihtiyacı hesaplama, kişinin vücut ağırlığı, fiziksel aktivite düzeyi ve iklim koşullarına göre günde tüketmesi gereken minimum su miktarını litre ve bardak cinsinden belirleyen bir sağlık aracıdır.`,
+    how: `Temel formül: Günlük Su (ml) = Vücut Ağırlığı (kg) × 33. Egzersiz yapan bireyler için her 30 dakikalık aktiviteye 350 ml eklenir. Sıcak iklimlerde ve hamilelik/emzirme dönemlerinde ihtiyaç %20-30 oranında artar.`,
+    why: `Dehidratasyon; baş ağrısı, yorgunluk, konsantrasyon kaybı ve böbrek sorunlarına yol açabilir. Günlük su ihtiyacınızı bilmek ve düzenli takip etmek, metabolizmanızın verimli çalışması için temel bir sağlık adımıdır.`,
+    faq: [
+      { q: "Çay ve kahve su ihtiyacına dahil mi?", a: "Kısmen. Kafeinli içecekler hafif diüretik etkiye sahip olsa da sıvı alımına katkı sağlar. Ancak saf su tüketiminin en az toplam ihtiyacın %60-70'ini oluşturması önerilir." },
+      { q: "Fazla su içmek zararlı mı?", a: "Çok nadir durumlarda aşırı su tüketimi hiponatremiye (kan sodyum düşüklüğü) yol açabilir. Günde 4-5 litreden fazla tüketimde dikkatli olunmalıdır." },
+      { q: "Çocuklar için su ihtiyacı nasıl hesaplanır?", a: "Çocuklarda su ihtiyacı yaşa göre değişir: 1-3 yaş ~1,3 litre, 4-8 yaş ~1,7 litre, 9-13 yaş ~2,1-2,4 litre olarak önerilmektedir." },
+    ],
+  },
+
+  "not-ortalamasi": {
+    what: `Ders notu ortalaması hesaplama, öğrencilerin aldıkları notları ve ders kredilerini (veya saatlerini) kullanarak ağırlıklı genel not ortalamasını (AGNO/GANO) bulan bir eğitim aracıdır. Üniversite, lise ve ortaokul düzeyinde kullanılır.`,
+    how: `Ağırlıklı Ortalama = Σ(Not × Kredi) / Σ(Kredi). Örneğin 3 kredilik bir dersten AA (4.0) ve 4 kredilik bir dersten BA (3.5) alındığında: (4.0×3 + 3.5×4) / (3+4) = 3.71. Harf notu sistemi üniversiteden üniversiteye farklılık gösterebilir.`,
+    why: `Not ortalaması; burs başvuruları, yatay/dikey geçiş, mezuniyet derecesi ve lisansüstü programlara başvuru gibi akademik kararlarda belirleyici bir kriterdir. Dönem içinde ortalama takibi, akademik hedeflere ulaşmayı kolaylaştırır.`,
+    faq: [
+      { q: "4'lük ve 100'lük not sistemi arasındaki fark nedir?", a: "4'lük sistemde notlar AA (4.0) ile FF (0.0) arasında harf notu olarak verilir. 100'lük sistemde sayısal puan kullanılır. Üniversiteler genellikle 4'lük sistemi tercih eder." },
+      { q: "GANO ile dönem ortalaması aynı mı?", a: "Hayır. Dönem ortalaması yalnızca o dönemin derslerini kapsar. GANO ise tüm dönemlerin kümülatif ortalamasıdır." },
+      { q: "Dersten kaldığımda ortalamam nasıl etkilenir?", a: "FF veya DD gibi düşük notlar ağırlıklı ortalamayı ciddi şekilde düşürür. Dersi tekrar alıp geçtiğinizde yeni not eski notun yerine geçer." },
+    ],
+  },
+
+  "damga-vergisi": {
+    what: `Damga vergisi, resmi belge ve kâğıtlar üzerinden alınan dolaylı bir vergidir. Kira sözleşmeleri, ihale kararları, taahhütnameler ve maaş bordroları gibi belgeler damga vergisine tabidir. 2026 yılı oranları Hazine ve Maliye Bakanlığı tarafından belirlenir.`,
+    how: `Damga vergisi iki şekilde hesaplanır: (1) Nispi vergi — belge tutarının belirli bir yüzdesi (örneğin sözleşmelerde binde 9,48). (2) Maktu vergi — belge türüne göre sabit tutar. Aracımız belge türü ve tutarını girerek vergi miktarını otomatik hesaplar.`,
+    why: `Damga vergisini yanlış hesaplamak veya beyan etmemek; cezai yaptırımlara, faiz uygulamasına ve vergi denetimlerinde sorunlara yol açar. Sözleşme öncesi doğru tutarı bilmek, her iki taraf için de yasal güvence sağlar.`,
+    faq: [
+      { q: "Kira sözleşmesinde damga vergisini kim öder?", a: "Yasal olarak damga vergisi sözleşmenin her iki tarafından da tahsil edilebilir. Ancak uygulamada genellikle kiracı tarafından ödenir." },
+      { q: "Dijital sözleşmelerde damga vergisi uygulanır mı?", a: "Evet. Elektronik ortamda düzenlenen ve imzalanan sözleşmeler de damga vergisine tabidir." },
+      { q: "Damga vergisinden muaf belgeler var mı?", a: "Evet. Eğitim ve sağlık kurumlarının bazı belgeleri, kredi sözleşmelerinin bazı türleri ve devlet ihale kanunu kapsamındaki belgeler muafiyet kapsamında olabilir." },
+    ],
+  },
+
+  "tasit-kredisi": {
+    what: `Taşıt kredisi, sıfır veya ikinci el araç satın almak isteyen bireylerin bankalardan kullandığı, araç üzerine rehin tesis edilen bir tüketici kredisidir.`,
+    how: `Hesaplama eşit taksit formülüyle yapılır. Anapara, faiz oranı ve vade girilerek aylık taksit bulunur. Araç yaşına göre kredi/değer oranı değişir: sıfır araçlarda %80'e, ikinci elde %70'e kadar finansman sağlanır.`,
+    why: `Araç alımında toplam sahiplik maliyetini (kredi + kasko + MTV + yakıt) önceden bilmek, bütçe planlaması ve doğru araç seçimi için kritiktir.`,
+    faq: [
+      { q: "İkinci el araç kredisinde faiz daha yüksek mi?", a: "Genellikle evet. İkinci el araç kredilerinde faiz oranları sıfır araç kampanyalarına göre %1-3 puan daha yüksek olabilir." },
+      { q: "Araç yaşı sınırı var mı?", a: "Bankalar genellikle vade sonunda araç yaşının 10'u aşmamasını şart koşar." },
+      { q: "Taşıt kredisinde kasko zorunlu mu?", a: "Evet. Kredi süresince araç üzerinde tam kasko sigortası bulundurulması bankalar tarafından zorunlu tutulur." },
+    ],
+  },
+
+  "kredi-karti-asgari": {
+    what: `Kredi kartı asgari ödeme hesaplama, kart borcunuzun tamamını ödeyemediğinizde bankaya yapmanız gereken minimum ödeme tutarını ve bu durumda oluşacak faiz yükünü gösteren bir finansal araçtır.`,
+    how: `Asgari ödeme = Toplam Borç × Asgari Ödeme Oranı (genellikle %20-40). Kalan borç üzerine aylık akdi faiz + BSMV uygulanır. Aracımız kalan borcun kaç ayda kapanacağını ve toplam faiz maliyetini hesaplar.`,
+    why: `Yalnızca asgari ödeme yapmak, borcun katlanarak büyümesine neden olur. 10.000 TL'lik bir borç, sadece asgari ödemeyle kapatıldığında toplam maliyet 15.000-20.000 TL'yi aşabilir.`,
+    faq: [
+      { q: "Asgari ödeme yapmazsam ne olur?", a: "Gecikme faizi uygulanır, kredi notunuz düşer ve yasal takip süreci başlayabilir." },
+      { q: "Asgari ödeme oranı tüm bankalarda aynı mı?", a: "Hayır. BDDK düzenlemesiyle minimum %20 olarak belirlenmiştir ancak bankalar daha yüksek oran uygulayabilir." },
+      { q: "Taksitli harcamalar asgari ödemeye dahil mi?", a: "Evet. O ay vadesi gelen taksit tutarları asgari ödeme hesabına dahil edilir." },
+    ],
+  },
+
+  "repo": {
+    what: `Repo, yatırımcının elindeki devlet tahvilini belirli bir süre için bankaya satıp, vade sonunda geri almayı taahhüt ettiği kısa vadeli bir yatırım aracıdır. Gecelik veya vadeli olarak işlem görür.`,
+    how: `Repo Getirisi = Anapara × (Repo Faizi / 365) × Gün Sayısı × (1 - Stopaj Oranı). Stopaj oranı %15'tir. Aracımız brüt ve net getiriyi ayrı ayrı hesaplar.`,
+    why: `Repo, 1 günlük bile olsa atıl paranızı değerlendirmenin en güvenli yollarından biridir. Özellikle kurumsal yatırımcılar nakit yönetiminde repo işlemlerini yoğun olarak kullanır.`,
+    faq: [
+      { q: "Repo ile vadeli mevduat arasındaki fark nedir?", a: "Repo devlet tahviline dayalıdır ve genellikle daha kısa vadelidir. Vadeli mevduat ise bankaya emanet edilen paradır." },
+      { q: "Repo güvenli mi?", a: "Evet. Repoda teminat devlet iç borçlanma senetleridir ve Takasbank güvencesi altındadır." },
+      { q: "Minimum repo tutarı var mı?", a: "Bankaya göre değişmekle birlikte genellikle 1.000-10.000 TL minimum tutar uygulanır." },
+    ],
+  },
+
+  "temettu": {
+    what: `Temettü (kâr payı) hesaplama, hisse senedi yatırımcısının sahip olduğu hisselerden elde edeceği yıllık kâr payı getirisini ve temettü verimini analiz eden bir finansal araçtır.`,
+    how: `Temettü Verimi = (Hisse Başına Temettü / Hisse Fiyatı) × 100. Toplam Getiri = Sahip Olunan Lot × Hisse Başına Temettü. Stopaj (%10) düşülerek net temettü geliri hesaplanır.`,
+    why: `Temettü verimi, hisse senedi seçiminde önemli bir kriterdir. Yüksek temettü veren şirketler, düzenli gelir arayan yatırımcılar için cazip olabilir.`,
+    faq: [
+      { q: "Temettü her yıl ödenir mi?", a: "Zorunlu değildir. Şirketin kâr etmesi ve genel kurulun dağıtım kararı alması gerekir." },
+      { q: "Temettü gelirinden vergi kesilir mi?", a: "Evet. Hisse senedi temettü gelirinden %10 oranında stopaj kesilir." },
+      { q: "Temettü tarihinde hisse almak yeterli mi?", a: "Hayır. Temettü hakkı, son işlem gününde hisseye sahip olanlara aittir. Bu tarihten sonra hisse fiyatı temettü kadar düşer." },
+    ],
+  },
+
+  "aof-harf-notu": {
+    what: `AÖF harf notu hesaplama, Açıköğretim Fakültesi öğrencilerinin vize ve final sınavı notlarından yola çıkarak bağıl değerlendirme (çan eğrisi) sonucunda alacakları tahmini harf notunu gösteren bir eğitim aracıdır.`,
+    how: `Ham puan = (Vize × 0,30) + (Final × 0,70). Bu ham puan, sınıf ortalaması ve standart sapma kullanılarak bağıl değerlendirmeye tabi tutulur. Aracımız farklı senaryo ortalamaları ile AA'dan FF'ye kadar tahmini harf notunu gösterir.`,
+    why: `AÖF'te bağıl değerlendirme sistemi nedeniyle aynı ham puan farklı dönemlerde farklı harf notuna karşılık gelebilir. Önceden simülasyon yapmak, final hedefini belirlemeye yardımcı olur.`,
+    faq: [
+      { q: "AÖF'te geçme notu kaçtır?", a: "DD ve üzeri harf notu alan öğrenciler dersi geçmiş sayılır. Ancak mezuniyet için genel ortalama en az 2.0 olmalıdır." },
+      { q: "Büt sınavı notu nasıl hesaplanır?", a: "Bütünleme sınavında alınan not, final notu yerine geçer. Vize ağırlığı değişmez." },
+      { q: "Çan eğrisi her ders için aynı mı?", a: "Hayır. Her dersin sınıf ortalaması ve standart sapması farklıdır, bu nedenle çan eğrisi de değişir." },
+    ],
+  },
+
+  "universite-not-ortalamasi": {
+    what: `Üniversite not ortalaması (GANO) hesaplama, tüm dönemlerde alınan harf notlarını ve AKTS/kredi bilgilerini kullanarak kümülatif ağırlıklı genel not ortalamasını bulan bir akademik araçtır.`,
+    how: `GANO = Σ(Harf Notu Katsayısı × AKTS) / Σ(AKTS). AA=4.0, BA=3.5, BB=3.0, CB=2.5, CC=2.0, DC=1.5, DD=1.0, FF=0.0. Aracımız sınırsız ders eklemenize ve dönem bazlı ayrıştırmaya imkân tanır.`,
+    why: `GANO; onur/yüksek onur derecesi, burs hakları, yatay geçiş başvuruları ve lisansüstü programlara kabul süreçlerinde en temel değerlendirme kriteridir.`,
+    faq: [
+      { q: "3.0 GANO ile onur belgesi alabilir miyim?", a: "Çoğu üniversitede 3.0-3.49 arası onur, 3.5 ve üzeri yüksek onur belgesi verilir. Ancak her üniversitenin kendi kriterleri vardır." },
+      { q: "Tekrar alınan derste eski not silinir mi?", a: "Evet. Çoğu üniversitede tekrar edilen derste yeni not eski notun yerine geçer ve GANO buna göre yeniden hesaplanır." },
+      { q: "AKTS ile kredi arasındaki fark nedir?", a: "AKTS (Avrupa Kredi Transfer Sistemi) öğrencinin toplam iş yükünü ölçer. Yerel kredi ise genellikle haftalık ders saatine dayanır." },
+    ],
+  },
+
+  "ne-zaman-emekli-olurum": {
+    what: `Emeklilik hesaplama, SGK'ya tabi çalışanların yaş, prim gün sayısı ve sigorta başlangıç tarihine göre en erken emeklilik tarihini belirleyen bir muhasebe aracıdır. EYT (Emeklilikte Yaşa Takılanlar) düzenlemesi de dahil edilir.`,
+    how: `Emeklilik şartları üç kriteri birlikte sağlamayı gerektirir: (1) Yaş şartı, (2) Minimum prim gün sayısı (7200 veya 9000 gün), (3) Minimum sigortalılık süresi (20-25 yıl). Aracımız bu üç koşulu birlikte değerlendirerek en erken emeklilik tarihinizi hesaplar.`,
+    why: `Emeklilik planlaması, kariyer ve finansal kararları doğrudan etkiler. Kalan prim gün sayısını ve beklenen emeklilik tarihini bilmek, ek isteğe bağlı prim ödeme stratejisi geliştirmenize olanak tanır.`,
+    faq: [
+      { q: "EYT'den nasıl yararlanabilirim?", a: "9 Eylül 1999 öncesi sigorta başlangıcı olan ve yaş şartını sağlayan kişiler EYT kapsamında başvurabilir." },
+      { q: "Prim gün sayımı nereden öğrenebilirim?", a: "e-Devlet üzerinden SGK hizmet dökümü sorgulayarak toplam prim gün sayınızı öğrenebilirsiniz." },
+      { q: "Askerlik borçlanması emekliliği öne çeker mi?", a: "Evet. Askerlik süresini SGK'ya borçlanarak prim gün sayınıza ekleyebilir ve emeklilik tarihinizi öne çekebilirsiniz." },
+    ],
+  },
+
+  "doviz-altin-hesaplama": {
+    what: `Döviz ve altın hesaplama, güncel piyasa kurlarını kullanarak TL ile Dolar, Euro ve çeşitli altın birimleri (Gram, Çeyrek, Yarım, Tam) arasında anlık dönüşüm yapan bir finans aracıdır.`,
+    how: `Dönüşüm formülü: TL Karşılığı = Miktar × Güncel Kur. Altın için gram fiyatı baz alınır ve çeyrek (1,75 gr), yarım (3,5 gr), tam (7 gr) altın ağırlıklarıyla çarpılır. Aracımız alış ve satış fiyatlarını ayrı gösterir.`,
+    why: `Döviz ve altın fiyatları sürekli değiştiğinden, anlık hesaplama yapabilmek tasarruf, yatırım ve alışveriş kararlarında doğru bilgiye ulaşmanın en hızlı yoludur.`,
+    faq: [
+      { q: "Gram altın ile çeyrek altın arasındaki fark nedir?", a: "Gram altın 1 gram saf altındır. Çeyrek altın ise 1,75 gram ağırlığında ve %91,6 saflıkta darphane basımı altındır. İşçilik farkı nedeniyle çeyrek altın gram fiyatının üzerindedir." },
+      { q: "Döviz alış ve satış fiyatı neden farklı?", a: "Aradaki fark (spread) bankanın veya döviz bürosunun kâr marjıdır. Alış fiyatı her zaman satış fiyatından düşüktür." },
+      { q: "En uygun kur nereden bulunur?", a: "Bankalar, döviz büroları ve dijital platformlar arasında kur farkları olabilir. Karşılaştırmalı arama yapmanız önerilir." },
+    ],
+  },
 };
 
 export function getGuideBySlug(slug: string): GuideSection | null {

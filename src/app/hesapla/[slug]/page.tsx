@@ -1,8 +1,20 @@
 import React from "react";
 import { Metadata } from "next";
-import { getCalculatorBySlug, getCategoryBySlug, calculators } from "@/data/calculators";
-import { CalculatorClient } from "@/components/CalculatorClient";
 import Link from "next/link";
+import { getCalculatorBySlug, getCategoryBySlug, calculators, categories } from "@/data/calculators";
+import { CalculatorWidget } from "@/components/CalculatorClient";
+import { CalculatorGuide } from "@/components/CalculatorGuide";
+import { Breadcrumb } from "@/components/Breadcrumb";
+import { LeftSidebar } from "@/components/LeftSidebar";
+import { RightSidebarAds } from "@/components/RightSidebarAds";
+import { AdPlaceholder } from "@/components/AdPlaceholder";
+import { getGuideBySlug } from "@/data/calculator-guides";
+import {
+  generateWebApplicationSchema,
+  generateFAQPageSchema,
+  generateBreadcrumbSchema,
+  buildCalculatorBreadcrumbs,
+} from "@/lib/seo-schemas";
 
 type Props = {
   params: Promise<{ slug: string }>;
@@ -19,6 +31,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     };
   }
 
+  const category = getCategoryBySlug(calc.categoryId);
+
   return {
     title: `${calc.title} Hesaplama`,
     description: calc.description,
@@ -30,10 +44,17 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       description: calc.description,
       url: `https://kalkula.com/hesapla/${slug}`,
     },
+    keywords: [
+      calc.title,
+      "hesaplama",
+      "hesap makinesi",
+      ...(category ? [category.name, `${category.name} hesaplama`] : []),
+      "kalkula",
+    ],
   };
 }
 
-// Statik Parametre Üretimi (Hızlı Yükleme ve SEO için)
+// Statik Parametre Üretimi (SSG)
 export async function generateStaticParams() {
   return calculators.map((calc) => ({
     slug: calc.slug,
@@ -54,28 +75,81 @@ export default async function CalculatorPage({ params }: Props) {
     );
   }
 
-  // Google için Yapılandırılmış Veri (JSON-LD)
-  const jsonLd = {
-    "@context": "https://schema.org",
-    "@type": "SoftwareApplication",
-    "name": calc.title,
-    "operatingSystem": "All",
-    "applicationCategory": "EducationalApplication",
-    "description": calc.description,
-    "offers": {
-      "@type": "Offer",
-      "price": "0",
-      "priceCurrency": "TRY"
-    }
-  };
+  // Guide verisi (SSR'da erişim — metin botlar tarafından okunabilir)
+  const guide = getGuideBySlug(slug);
+
+  // Breadcrumb öğeleri
+  const breadcrumbItems = buildCalculatorBreadcrumbs(calc, category);
+
+  // JSON-LD Şemaları
+  const schemas = [
+    generateWebApplicationSchema(calc, category),
+    generateBreadcrumbSchema(breadcrumbItems),
+    ...(guide?.faq ? [generateFAQPageSchema(guide.faq)] : []),
+  ];
 
   return (
     <>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-      />
-      <CalculatorClient slug={slug} calc={calc} category={category} />
+      {/* Yapılandırılmış Veri — Sunucu tarafında oluşturuluyor */}
+      {schemas.map((schema, i) => (
+        <script
+          key={i}
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+        />
+      ))}
+
+      <div className="container layout-3col" style={{ padding: "1.5rem 0.75rem" }}>
+        <LeftSidebar />
+
+        <div className="main-content">
+          <AdPlaceholder type="leaderboard" />
+
+          {/* Breadcrumb — SSR */}
+          <Breadcrumb
+            items={[
+              { label: "Ana Sayfa", href: "/" },
+              ...(category
+                ? [{ label: category.name, href: `/kategori/${category.slug}` }]
+                : []),
+              { label: calc.title },
+            ]}
+          />
+
+          <div className="panel" style={{ padding: 0 }}>
+            {/* Başlık ve açıklama — SSR (Botlar tarafından okunabilir) */}
+            <div style={{ padding: "1.5rem 1.25rem", background: "var(--bg-secondary)", borderBottom: "1px solid var(--border)" }}>
+              <div className="md:px-4">
+                <h1 style={{ fontSize: "1.75rem", fontWeight: 800, marginBottom: "0.5rem", letterSpacing: "-0.02em", lineHeight: 1.2 }}>
+                  {calc.title}
+                </h1>
+                <p style={{ color: "var(--text-secondary)", fontSize: "0.9rem", lineHeight: 1.5, maxWidth: "800px" }}>
+                  {calc.description}
+                </p>
+              </div>
+            </div>
+
+            <div style={{ padding: "1rem 1.25rem" }}>
+              <AdPlaceholder type="native" />
+            </div>
+
+            {/* Hesaplama Widget (Client-Side) + Rehber (Server-Side) */}
+            <div className="p-4 md:p-10">
+              <CalculatorWidget slug={slug} />
+              <CalculatorGuide slug={slug} />
+            </div>
+          </div>
+
+          <AdPlaceholder type="fluid" style={{ marginTop: '2rem' }} />
+
+          <div style={{ marginTop: '3rem' }}>
+            <h3 style={{ fontSize: "1.1rem", fontWeight: 800, marginBottom: "1.5rem", opacity: 0.8 }}>Sizin İçin Seçtiklerimiz</h3>
+            <AdPlaceholder type="multiplex" />
+          </div>
+        </div>
+
+        <RightSidebarAds />
+      </div>
     </>
   );
 }

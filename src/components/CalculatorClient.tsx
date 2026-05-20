@@ -1,13 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import Link from "next/link";
-import { getCategoryBySlug, Category, CalculatorInfo } from "@/data/calculators";
-import { LeftSidebar } from "@/components/LeftSidebar";
-import { RightSidebarAds } from "@/components/RightSidebarAds";
-import { AdPlaceholder } from "@/components/AdPlaceholder";
-import { CalculatorGuide } from "@/components/CalculatorGuide";
-
+import React, { useEffect } from "react";
 import dynamic from "next/dynamic";
 
 const LoadingCalculator = () => (
@@ -225,25 +218,21 @@ function GenericCalculator() {
   );
 }
 
-interface CalculatorClientProps {
+interface CalculatorWidgetProps {
   slug: string;
-  calc: CalculatorInfo;
-  category: Category | null;
 }
 
-export function CalculatorClient({ slug, calc, category }: CalculatorClientProps) {
+export function CalculatorWidget({ slug }: CalculatorWidgetProps) {
   useEffect(() => {
-    if (calc) {
-      try {
-        const stored = JSON.parse(localStorage.getItem("recent_calculators") || "[]");
-        const filtered = stored.filter((s: string) => s !== slug);
-        filtered.unshift(slug);
-        localStorage.setItem("recent_calculators", JSON.stringify(filtered.slice(0, 4)));
-      } catch (e) {
-        // ignore errors
-      }
+    try {
+      const stored = JSON.parse(localStorage.getItem("recent_calculators") || "[]");
+      const filtered = stored.filter((s: string) => s !== slug);
+      filtered.unshift(slug);
+      localStorage.setItem("recent_calculators", JSON.stringify(filtered.slice(0, 4)));
+    } catch (e) {
+      // ignore errors
     }
-  }, [slug, calc]);
+  }, [slug]);
 
   const renderCalculator = () => {
     switch (slug) {
@@ -465,51 +454,7 @@ export function CalculatorClient({ slug, calc, category }: CalculatorClientProps
   };
 
   return (
-    <div className="container layout-3col" style={{ padding: "1.5rem 0.75rem" }}>
-      <LeftSidebar />
-
-      <div className="main-content">
-        <AdPlaceholder type="leaderboard" />
-
-        {category && (
-          <nav style={{ marginBottom: "1rem", fontSize: "0.75rem", color: "var(--text-muted)", display: "flex", alignItems: "center", gap: "0.4rem", flexWrap: "wrap" }}>
-            <Link href="/" style={{ color: "var(--text-muted)" }}>Ana Sayfa</Link>
-            <span style={{ opacity: 0.5 }}>›</span>
-            <Link href={`/kategori/${category.slug}`} style={{ color: "var(--text-muted)" }}>{category.name}</Link>
-            <span style={{ opacity: 0.5 }}>›</span>
-            <span style={{ color: "var(--text-primary)", fontWeight: 500 }}>{calc.title}</span>
-          </nav>
-        )}
-
-        <div className="panel" style={{ padding: 0 }}>
-          <div style={{ padding: "1.5rem 1.25rem", background: "var(--bg-secondary)", borderBottom: "1px solid var(--border)" }}>
-            <div className="md:px-4">
-              <h1 style={{ fontSize: "1.75rem", fontWeight: 800, marginBottom: "0.5rem", letterSpacing: "-0.02em", lineHeight: 1.2 }}>{calc.title}</h1>
-              <p style={{ color: "var(--text-secondary)", fontSize: "0.9rem", lineHeight: 1.5, maxWidth: "800px" }}>
-                {calc.description}
-              </p>
-            </div>
-          </div>
-
-          <div style={{ padding: "1rem 1.25rem" }}>
-            <AdPlaceholder type="native" />
-          </div>
-
-          <div className="p-4 md:p-10">
-            {renderCalculator()}
-            <CalculatorGuide slug={slug} />
-          </div>
-        </div>
-
-        <AdPlaceholder type="fluid" style={{ marginTop: '2rem' }} />
-
-        <div style={{ marginTop: '3rem' }}>
-          <h3 style={{ fontSize: "1.1rem", fontWeight: 800, marginBottom: "1.5rem", opacity: 0.8 }}>Sizin İçin Seçtiklerimiz</h3>
-          <AdPlaceholder type="multiplex" />
-        </div>
-      </div>
-
-      <RightSidebarAds />
-    </div>
+    <div>{renderCalculator()}</div>
   );
 }
+

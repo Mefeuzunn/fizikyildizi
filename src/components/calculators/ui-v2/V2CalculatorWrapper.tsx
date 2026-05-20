@@ -28,9 +28,9 @@ export const V2CalculatorWrapper: React.FC<V2CalculatorWrapperProps> = ({
 
       {/* RESULTS SECTION */}
       {results && (
-        <div className="mt-8 md:mt-12 calc-result-panel-v2 border border-white/5 rounded-[2rem] md:rounded-[2.5rem] bg-[#0f172a] shadow-inner overflow-hidden">
+        <div className="mt-8 md:mt-12 calc-result-panel-v2 rounded-[2rem] md:rounded-[2.5rem] overflow-hidden">
           {title && (
-            <div className="calc-result-header-v2 bg-white/5 py-4 px-6 md:py-6 md:px-10">
+            <div className="calc-result-header-v2 py-4 px-6 md:py-6 md:px-10">
                {icon && <span className="text-xl">{icon}</span>}
                <span className="text-xs font-black uppercase tracking-[0.2em]">{title}</span>
             </div>

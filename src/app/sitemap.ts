@@ -15,6 +15,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 1.0,
     },
     {
+      url: `${BASE_URL}/kategoriler`,
+      lastModified: now,
+      changeFrequency: "weekly",
+      priority: 0.9,
+    },
+    {
       url: `${BASE_URL}/hakkimizda`,
       lastModified: now,
       changeFrequency: "monthly",
@@ -31,6 +37,18 @@ export default function sitemap(): MetadataRoute.Sitemap {
       lastModified: now,
       changeFrequency: "monthly",
       priority: 0.4,
+    },
+    {
+      url: `${BASE_URL}/sss`,
+      lastModified: now,
+      changeFrequency: "monthly",
+      priority: 0.5,
+    },
+    {
+      url: `${BASE_URL}/kullanim-sartlari`,
+      lastModified: now,
+      changeFrequency: "monthly",
+      priority: 0.3,
     },
     {
       url: `${BASE_URL}/calculator`,

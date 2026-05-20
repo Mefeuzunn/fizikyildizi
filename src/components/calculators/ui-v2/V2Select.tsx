@@ -32,7 +32,7 @@ export function V2Select<T extends string = string>({
           className={`calc-input-field appearance-none pr-10 cursor-pointer ${fieldClassName}`}
         >
           {children ? children : options?.map((opt) => (
-            <option key={opt.value} value={opt.value} className="bg-[#1e293b] text-white">
+            <option key={opt.value} value={opt.value} style={{ background: "var(--surface)", color: "var(--text-primary)" }}>
               {opt.label}
             </option>
           ))}

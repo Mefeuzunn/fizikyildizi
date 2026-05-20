@@ -5,38 +5,29 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { categories } from "@/data/calculators";
 import { CategoryIcon } from "@/components/CategoryIcon";
+import styles from "./LeftSidebar.module.css";
 
 export function LeftSidebar() {
   const pathname = usePathname();
 
   return (
     <aside className="left-sidebar sticky-sidebar">
-      <div style={{ padding: "1.25rem" }}>
-        <h3 style={{ fontSize: "0.75rem", fontWeight: 700, color: "var(--text-muted)", marginBottom: "0.75rem", textTransform: "uppercase", letterSpacing: "1.5px" }}>
+      <div className={styles.sidebar}>
+        <h3 className={styles.title}>
           Kategoriler
         </h3>
-        <nav style={{ display: "flex", flexDirection: "column", gap: "0.15rem" }}>
+        <nav className={styles.nav}>
           {categories.map((cat) => {
             const isActive = pathname === `/kategori/${cat.slug}`;
             return (
               <Link
                 key={cat.id}
                 href={`/kategori/${cat.slug}`}
+                className={`${styles.link} ${isActive ? styles.linkActive : ""}`}
                 style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "0.75rem",
-                  padding: "0.5rem 0.75rem",
-                  borderRadius: "7px",
-                  color: isActive ? (cat.color || "var(--accent-primary)") : "var(--text-secondary)",
-                  fontWeight: isActive ? 800 : 500,
-                  fontSize: "0.875rem",
-                  background: isActive ? `${cat.color}11` : "transparent",
-                  borderLeft: isActive ? `3px solid ${cat.color || "var(--accent-primary)"}` : "3px solid transparent",
-                  transition: "all 0.15s",
-                  textDecoration: "none",
-                }}
-                className="sidebar-link"
+                  "--link-color": cat.color || "var(--accent-primary)",
+                  "--link-bg": isActive ? `${cat.color}18` : "transparent",
+                } as React.CSSProperties}
               >
                 <CategoryIcon id={cat.id} size={18} color={isActive ? (cat.color || "var(--accent-primary)") : "var(--text-muted)"} strokeWidth={isActive ? 2.5 : 2} />
                 {cat.name}
@@ -45,12 +36,12 @@ export function LeftSidebar() {
           })}
         </nav>
 
-        <div style={{ borderTop: "1px solid var(--border)", margin: "1.25rem 0" }} />
+        <div className={styles.separator} />
 
-        <h3 style={{ fontSize: "0.75rem", fontWeight: 700, color: "var(--text-muted)", marginBottom: "0.75rem", textTransform: "uppercase", letterSpacing: "1.5px" }}>
+        <h3 className={styles.title}>
           Araçlar
         </h3>
-        <nav style={{ display: "flex", flexDirection: "column", gap: "0.15rem" }}>
+        <nav className={styles.nav}>
           {[
             { href: "/calculator", label: "🔢 Hesap Makinesi" },
             { href: "/notepad", label: "📝 Not Defteri" },
@@ -61,18 +52,7 @@ export function LeftSidebar() {
             const isActive = pathname === t.href;
             return (
               <Link key={t.href} href={t.href}
-                style={{
-                  display: "block",
-                  padding: "0.5rem 0.75rem",
-                  borderRadius: "7px",
-                  color: isActive ? "var(--accent-primary)" : "var(--text-secondary)",
-                  fontWeight: isActive ? 700 : 400,
-                  fontSize: "0.875rem",
-                  background: isActive ? "var(--accent-glow)" : "transparent",
-                  transition: "all 0.15s",
-                  textDecoration: "none",
-                }}
-                className="sidebar-link"
+                className={`${styles.toolLink} ${isActive ? styles.toolLinkActive : ""}`}
               >
                 {t.label}
               </Link>

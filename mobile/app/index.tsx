@@ -1,11 +1,13 @@
 import React, { useState } from "react";
-import { View, Text, FlatList, TextInput, TouchableOpacity, ScrollView } from "react-native";
+import { View, Text, FlatList, TextInput, TouchableOpacity } from "react-native";
 import { CATEGORIES } from "../constants/categories";
 import * as Icons from "lucide-react-native";
 import { Search } from "lucide-react-native";
+import { useRouter } from "expo-router";
 
 export default function HomeScreen() {
   const [searchQuery, setSearchQuery] = useState("");
+  const router = useRouter();
 
   const filteredCategories = CATEGORIES.filter((cat) =>
     cat.name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -16,6 +18,7 @@ export default function HomeScreen() {
 
     return (
       <TouchableOpacity
+        onPress={() => router.push(`/category/${item.slug}`)}
         className="bg-white m-2 p-5 rounded-3xl shadow-sm flex-1 items-start justify-between border border-slate-100"
         style={{ height: 160 }}
       >
