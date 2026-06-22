@@ -4,7 +4,7 @@ import { useState, FormEvent, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense } from 'react';
-import styles from '../fizik.module.css';
+import styles from '@/app/fizik-yildizi/fizik.module.css';
 import { getOgretmenler, saveKullanici } from '@/lib/fizik-yildizi/db';
 
 type Rol = 'ogrenci' | 'ogretmen' | 'veli';

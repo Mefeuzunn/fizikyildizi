@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import FizikNavbar from '@/components/fizik-yildizi/FizikNavbar';
-import styles from '../../fizik.module.css';
+import styles from '@/app/fizik-yildizi/fizik.module.css';
 
 const AVATAR_COLORS = [
   '#ef4444', '#f97316', '#f59e0b', '#84cc16', '#10b981', 

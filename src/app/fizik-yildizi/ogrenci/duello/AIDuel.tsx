@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { sorular, Soru } from '@/data/fizik-yildizi/sorular';
 import { updateXp } from '@/lib/fizik-yildizi/db';
-import styles from '../../fizik.module.css';
+import styles from '@/app/fizik-yildizi/fizik.module.css';
 
 // ─── Types & Constants ───────────────────────────────────────────────────────
 type DuelPhase = 'lobby' | 'matching' | 'active' | 'round_end' | 'finished';

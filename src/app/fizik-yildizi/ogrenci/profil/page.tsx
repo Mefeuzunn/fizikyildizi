@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { getKullanicilar, saveKullanici, kullaniciSil, Kullanici } from '@/lib/fizik-yildizi/db';
 import FizikNavbar from '@/components/fizik-yildizi/FizikNavbar';
-import styles from '../../fizik.module.css';
+import styles from '@/app/fizik-yildizi/fizik.module.css';
 
 interface TestSonuc {
   score?: number;

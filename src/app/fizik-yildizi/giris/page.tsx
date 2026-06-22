@@ -3,7 +3,7 @@
 import { useState, FormEvent } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import styles from '../fizik.module.css';
+import styles from '@/app/fizik-yildizi/fizik.module.css';
 import { getKullanicilar, syncWithServer } from '@/lib/fizik-yildizi/db';
 import { useEffect } from 'react';
 

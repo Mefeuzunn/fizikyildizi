@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { updateXp } from '@/lib/fizik-yildizi/db';
-import styles from '../../fizik.module.css';
+import styles from '@/app/fizik-yildizi/fizik.module.css';
 
 interface DuelData {
   id: number;

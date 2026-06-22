@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import styles from '../../../fizik.module.css';
+import styles from '@/app/fizik-yildizi/fizik.module.css';
 
 export default function AdminDashboardPage() {
   const router = useRouter();

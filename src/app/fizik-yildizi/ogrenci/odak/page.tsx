@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import styles from '../../fizik.module.css';
+import styles from '@/app/fizik-yildizi/fizik.module.css';
 
 const SOUNDS = [
   { id: 'lofi', name: 'Lofi Beats', icon: '🎵', url: 'https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf07a.mp3?filename=lofi-study-112191.mp3' },

@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import styles from '../fizik.module.css';
+import styles from '@/app/fizik-yildizi/fizik.module.css';
 
 export default function HakkimizdaPage() {
   return (

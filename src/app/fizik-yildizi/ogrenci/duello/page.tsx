@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import FizikNavbar from '@/components/fizik-yildizi/FizikNavbar';
-import styles from '../../fizik.module.css';
+import styles from '@/app/fizik-yildizi/fizik.module.css';
 import AIDuel from './AIDuel';
 import RealDuel from './RealDuel';
 

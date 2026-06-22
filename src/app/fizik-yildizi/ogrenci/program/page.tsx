@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import FizikNavbar from '@/components/fizik-yildizi/FizikNavbar';
-import styles from '../../fizik.module.css';
+import styles from '@/app/fizik-yildizi/fizik.module.css';
 import { sorular } from '@/data/fizik-yildizi/sorular';
 
 interface Gorev {

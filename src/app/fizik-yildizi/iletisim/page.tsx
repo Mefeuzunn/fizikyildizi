@@ -2,7 +2,7 @@
 
 import { useState, FormEvent } from 'react';
 import Link from 'next/link';
-import styles from '../fizik.module.css';
+import styles from '@/app/fizik-yildizi/fizik.module.css';
 
 export default function IletisimPage() {
   const [ad, setAd] = useState('');

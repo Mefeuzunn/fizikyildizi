@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import FizikNavbar from '@/components/fizik-yildizi/FizikNavbar';
 import { sorular } from '@/data/fizik-yildizi/sorular';
-import styles from '../../fizik.module.css';
+import styles from '@/app/fizik-yildizi/fizik.module.css';
 import {
   ResponsiveContainer,
   RadarChart,

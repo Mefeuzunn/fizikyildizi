@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import FizikNavbar from '@/components/fizik-yildizi/FizikNavbar';
-import styles from '../../fizik.module.css';
+import styles from '@/app/fizik-yildizi/fizik.module.css';
 
 const STORE_ITEMS = [
   { id: 'frame_gold', type: 'frame', name: 'Altın Çerçeve', desc: 'Profilini saf altın rengiyle çerçevele.', price: 50, icon: '🌟', color: '#fbbf24' },

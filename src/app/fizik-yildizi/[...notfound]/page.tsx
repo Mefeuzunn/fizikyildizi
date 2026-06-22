@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import styles from '../fizik.module.css';
+import styles from '@/app/fizik-yildizi/fizik.module.css';
 
 interface CatchAllProps {
   params: {
