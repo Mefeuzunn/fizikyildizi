@@ -2,7 +2,6 @@ import { NextResponse } from 'next/server';
 import { Resend } from 'resend';
 import { hashPassword } from '@/lib/fizik-yildizi/encryption';
 
-const resend = new Resend(process.env.RESEND_API_KEY || 're_dummy_key');
 
 import {
   initDatabase,
@@ -278,6 +277,7 @@ export async function POST(req: Request) {
         setDogrulamaKodu(data.email, kod);
         
         try {
+          const resend = new Resend(process.env.RESEND_API_KEY || 're_dummy_key');
           await resend.emails.send({
             from: 'Fizik Yıldızı <onboarding@resend.dev>',
             to: data.email,
