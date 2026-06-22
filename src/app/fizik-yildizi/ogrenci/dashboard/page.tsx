@@ -12,7 +12,7 @@ import YksSayaci from '@/components/fizik-yildizi/YksSayaci';
 
 interface Kullanici {
   id: string; ad: string; soyad: string; email: string;
-  rol: 'ogrenci' | 'ogretmen'; sinif?: number; avatarRenk?: string;
+  rol: 'ogrenci' | 'ogretmen' | 'veli' | 'admin'; sinif?: number; avatarRenk?: string;
   profilResmi?: string;
   onayDurumu?: string;
 }

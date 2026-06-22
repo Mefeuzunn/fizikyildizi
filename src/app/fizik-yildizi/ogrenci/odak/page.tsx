@@ -183,7 +183,7 @@ export default function OdakOdasiPage() {
             </button>
           </div>
 
-          <div style={{ fontSize: '10rem', fontWeight: 900, fontFamily: 'monospace', lineHeight: 1, letterSpacing: '-4px', background: mode === 'work' ? 'linear-gradient(180deg, #fff, #a1a1aa)' : 'linear-gradient(180deg, #fff, #94a3b8)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', dropShadow: '0 10px 30px rgba(0,0,0,0.5)' }}>
+          <div style={{ fontSize: '10rem', fontWeight: 900, fontFamily: 'monospace', lineHeight: 1, letterSpacing: '-4px', background: mode === 'work' ? 'linear-gradient(180deg, #fff, #a1a1aa)' : 'linear-gradient(180deg, #fff, #94a3b8)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', filter: 'drop-shadow(0 10px 30px rgba(0,0,0,0.5))' }}>
             {formatTime(timeLeft)}
           </div>
 

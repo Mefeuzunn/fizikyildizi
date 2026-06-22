@@ -58,7 +58,7 @@ export default function AkilliProgramPage() {
     Object.keys(testGecmisi).forEach(qId => {
       const q = sorular.find(s => s.id === qId || s.id === qId.split('-v')[0]);
       if (q) {
-        if (!kazanimMap[q.kazanim]) kazanimMap[q.kazanim] = { toplam: 0, dogru: 0, konu: q.konuBaslik };
+        if (!kazanimMap[q.kazanim]) kazanimMap[q.kazanim] = { toplam: 0, dogru: 0, konu: q.konuId };
         kazanimMap[q.kazanim].toplam++;
         if (testGecmisi[qId]) kazanimMap[q.kazanim].dogru++;
       }
