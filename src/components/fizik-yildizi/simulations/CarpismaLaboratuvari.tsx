@@ -1,173 +1,296 @@
-import React, { useState, useEffect, useRef } from 'react';
+'use client';
 
-const CarpismaLaboratuvari: React.FC = () => {
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { SimLayout, SimSlider, SimButton, AstroTutorObserver, SimTimeController } from './ui';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+
+const CW = 800;
+const CH = 300;
+
+export default function CarpismaLaboratuvari() {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const animRef = useRef<number>(0);
+  
   const [m1, setM1] = useState(2);
   const [v1Init, setV1Init] = useState(3);
   const [m2, setM2] = useState(2);
   const [v2Init, setV2Init] = useState(-2);
   const [isElastic, setIsElastic] = useState(true);
+
+  const [running, setRunning] = useState(false);
+  const [timeScale, setTimeScale] = useState(1);
+  const [aiMessage, setAiMessage] = useState<string | null>(null);
+  const [aiType, setAiType] = useState<'info'|'warning'|'success'>('info');
   
-  const [x1, setX1] = useState(100);
-  const [x2, setX2] = useState(500);
-  const [v1, setV1] = useState(3);
-  const [v2, setV2] = useState(-2);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [hasCollided, setHasCollided] = useState(false);
+  const [activeChart, setActiveChart] = useState<'momentum_vs_t' | 'energy_vs_t'>('momentum_vs_t');
+  const [chartData, setChartData] = useState<{t: number, p1: number, p2: number, pTotal: number, keTotal: number}[]>([]);
+  const chartUpdateCounter = useRef(0);
 
-  const requestRef = useRef<number | null>(null);
-  const lastTimeRef = useRef<number | null>(null);
+  const [display, setDisplay] = useState({ v1: 0, v2: 0, pTotal: 0, keTotal: 0, t: 0 });
 
-  const blockWidth = 60;
-  const trackWidth = 800;
+  const stateRef = useRef({
+    x1: 150,
+    x2: 650,
+    v1: v1Init,
+    v2: v2Init,
+    t: 0,
+    lastTs: 0,
+    running: false,
+    hasCollided: false
+  });
 
-  const reset = () => {
-    setIsPlaying(false);
-    setHasCollided(false);
-    setX1(100);
-    setX2(500);
-    setV1(v1Init);
-    setV2(v2Init);
+  const blockW = 60;
+
+  const drawGrid = (ctx: CanvasRenderingContext2D) => {
+    ctx.strokeStyle = '#1f2937';
+    ctx.lineWidth = 1;
+    for (let x = 0; x <= CW; x += 50) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, CH); ctx.stroke(); }
+    for (let y = 0; y <= CH; y += 50) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(CW, y); ctx.stroke(); }
   };
 
-    const updatePhysics = (time: number) => {
-    if (lastTimeRef.current != null) {
-      const dt = Math.min((time - lastTimeRef.current) / 1000, 0.05);
-      const speedScale = 50;
-      
-      let curV1 = 0; let curV2 = 0;
-      setV1(v => { curV1 = v; return v; });
-      setV2(v => { curV2 = v; return v; });
+  const drawVector = (ctx: CanvasRenderingContext2D, x1: number, y1: number, x2: number, y2: number, color: string, label: string) => {
+    if (Math.abs(x2 - x1) < 1) return;
+    ctx.save();
+    ctx.strokeStyle = color;
+    ctx.fillStyle = color;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(x1, y1);
+    ctx.lineTo(x2, y2);
+    ctx.stroke();
+    const angle = Math.atan2(y2 - y1, x2 - x1);
+    ctx.beginPath();
+    ctx.moveTo(x2, y2);
+    ctx.lineTo(x2 - 8 * Math.cos(angle - Math.PI/6), y2 - 8 * Math.sin(angle - Math.PI/6));
+    ctx.lineTo(x2 - 8 * Math.cos(angle + Math.PI/6), y2 - 8 * Math.sin(angle + Math.PI/6));
+    ctx.fill();
+    ctx.font = '12px monospace';
+    ctx.fillText(label, x2 + (x2 > x1 ? 5 : -25), y2 - 5);
+    ctx.restore();
+  };
 
-      setX1((prevX1) => {
-        let nX1 = prevX1;
-        setX2((prevX2) => {
-          let nextX1 = prevX1 + curV1 * speedScale * dt;
-          let nextX2 = prevX2 + curV2 * speedScale * dt;
-          let nextV1 = curV1;
-          let nextV2 = curV2;
+  const drawSystem = (ctx: CanvasRenderingContext2D, x1: number, x2: number, curV1: number, curV2: number) => {
+    // Floor
+    ctx.fillStyle = '#4b5563';
+    ctx.fillRect(0, CH - 50, CW, 50);
+    
+    // M1
+    ctx.fillStyle = '#ef4444';
+    ctx.fillRect(x1, CH - 50 - blockW, blockW, blockW);
+    ctx.fillStyle = '#fff';
+    ctx.font = '16px monospace';
+    ctx.fillText(`m1=${m1}`, x1 + 5, CH - 50 - blockW/2 + 5);
+    drawVector(ctx, x1 + blockW/2, CH - 50 - blockW/2, x1 + blockW/2 + curV1 * 10, CH - 50 - blockW/2, '#60a5fa', 'v1');
 
-          setHasCollided(collided => {
-            if (!collided && nextX1 + blockWidth >= nextX2) {
-              if (isElastic) {
-                nextV1 = ((m1 - m2) * curV1 + 2 * m2 * curV2) / (m1 + m2);
-                nextV2 = ((m2 - m1) * curV2 + 2 * m1 * curV1) / (m1 + m2);
-              } else {
-                const finalV = (m1 * curV1 + m2 * curV2) / (m1 + m2);
-                nextV1 = finalV;
-                nextV2 = finalV;
-              }
-              nextX1 = nextX2 - blockWidth;
-              return true;
-            }
-            return collided;
-          });
+    // M2
+    ctx.fillStyle = '#3b82f6';
+    ctx.fillRect(x2, CH - 50 - blockW, blockW, blockW);
+    ctx.fillStyle = '#fff';
+    ctx.fillText(`m2=${m2}`, x2 + 5, CH - 50 - blockW/2 + 5);
+    drawVector(ctx, x2 + blockW/2, CH - 50 - blockW/2, x2 + blockW/2 + curV2 * 10, CH - 50 - blockW/2, '#ef4444', 'v2');
+  };
 
-          if (nextX1 < 0) { nextX1 = 0; nextV1 = -nextV1; }
-          if (nextX2 > trackWidth - blockWidth) { nextX2 = trackWidth - blockWidth; nextV2 = -nextV2; }
+  const stepPhysics = (dt: number) => {
+    const st = stateRef.current;
+    const speedScale = 50;
 
-          setV1(nextV1);
-          setV2(nextV2);
-          
-          nX1 = nextX1;
-          return nextX2;
+    let nextX1 = st.x1 + st.v1 * speedScale * dt;
+    let nextX2 = st.x2 + st.v2 * speedScale * dt;
+
+    if (!st.hasCollided && nextX1 + blockW >= nextX2) {
+       st.hasCollided = true;
+       if (isElastic) {
+         const newV1 = ((m1 - m2) * st.v1 + 2 * m2 * st.v2) / (m1 + m2);
+         const newV2 = ((m2 - m1) * st.v2 + 2 * m1 * st.v1) / (m1 + m2);
+         st.v1 = newV1;
+         st.v2 = newV2;
+         setAiMessage('Esnek çarpışma gerçekleşti! Toplam kinetik enerji korundu.');
+         setAiType('success');
+       } else {
+         const finalV = (m1 * st.v1 + m2 * st.v2) / (m1 + m2);
+         st.v1 = finalV;
+         st.v2 = finalV;
+         setAiMessage('Kenetlenme (esnek olmayan çarpışma) gerçekleşti! Kinetik enerjinin bir kısmı ısıya dönüştü.');
+         setAiType('warning');
+       }
+       nextX1 = nextX2 - blockW; // Prevent overlap
+    }
+
+    // Walls bounce
+    if (nextX1 < 0) { nextX1 = 0; st.v1 = -st.v1; st.hasCollided = false; }
+    if (nextX2 > CW - blockW) { nextX2 = CW - blockW; st.v2 = -st.v2; st.hasCollided = false; }
+
+    st.x1 = nextX1;
+    st.x2 = nextX2;
+    st.t += dt;
+  };
+
+  const drawFrame = useCallback(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d')!;
+    const st = stateRef.current;
+
+    ctx.fillStyle = '#050a1a';
+    ctx.fillRect(0, 0, CW, CH);
+    drawGrid(ctx);
+
+    if (st.running) {
+      const now = performance.now();
+      const realDt = st.lastTs ? (now - st.lastTs) / 1000 : 0.016;
+      st.lastTs = now;
+      const simDt = Math.min(realDt, 0.05) * timeScale;
+      stepPhysics(simDt);
+    }
+
+    drawSystem(ctx, st.x1, st.x2, st.v1, st.v2);
+
+    const p1 = m1 * st.v1;
+    const p2 = m2 * st.v2;
+    const pTotal = p1 + p2;
+    const keTotal = 0.5 * m1 * st.v1 * st.v1 + 0.5 * m2 * st.v2 * st.v2;
+
+    setDisplay({ v1: st.v1, v2: st.v2, pTotal, keTotal, t: st.t });
+
+    if (st.running) {
+      chartUpdateCounter.current++;
+      if (chartUpdateCounter.current % 5 === 0) {
+        setChartData(prev => {
+          const newData = [...prev, { t: Number(st.t.toFixed(2)), p1: Number(p1.toFixed(2)), p2: Number(p2.toFixed(2)), pTotal: Number(pTotal.toFixed(2)), keTotal: Number(keTotal.toFixed(2)) }];
+          if (newData.length > 200) return newData.slice(newData.length - 200);
+          return newData;
         });
-        return nX1;
-      });
+      }
+      animRef.current = requestAnimationFrame(drawFrame);
     }
-    lastTimeRef.current = time;
-    if (isPlaying) {
-      requestRef.current = requestAnimationFrame(updatePhysics);
-    }
-  };
+  }, [timeScale, m1, m2, isElastic]);
 
   useEffect(() => {
-    if (isPlaying) {
-      lastTimeRef.current = performance.now();
-      requestRef.current = requestAnimationFrame(updatePhysics);
-    } else {
-      lastTimeRef.current = null;
+    if (!running) {
+      stateRef.current.v1 = v1Init;
+      stateRef.current.v2 = v2Init;
+      drawFrame();
     }
-    return () => {
-      if (requestRef.current) cancelAnimationFrame(requestRef.current);
-    };
-  }, [isPlaying, m1, m2, isElastic]);
+  }, [v1Init, v2Init, m1, m2, isElastic, drawFrame, running]);
 
-  const p1 = m1 * v1;
-  const p2 = m2 * v2;
-  const pTotal = p1 + p2;
-  const ke1 = 0.5 * m1 * v1 * v1;
-  const ke2 = 0.5 * m2 * v2 * v2;
-  const keTotal = ke1 + ke2;
+  const handleStart = () => {
+    if (!running) {
+      if (stateRef.current.t === 0) {
+        stateRef.current.x1 = 150;
+        stateRef.current.x2 = 650;
+        stateRef.current.v1 = v1Init;
+        stateRef.current.v2 = v2Init;
+        stateRef.current.hasCollided = false;
+      }
+      stateRef.current.lastTs = performance.now();
+      stateRef.current.running = true;
+      setRunning(true);
+      setAiMessage(null);
+      animRef.current = requestAnimationFrame(drawFrame);
+    } else {
+      stateRef.current.running = false;
+      setRunning(false);
+    }
+  };
+
+  const handleReset = () => {
+    cancelAnimationFrame(animRef.current);
+    stateRef.current = { x1: 150, x2: 650, v1: v1Init, v2: v2Init, t: 0, lastTs: 0, running: false, hasCollided: false };
+    setRunning(false);
+    setChartData([]);
+    setAiMessage(null);
+    drawFrame();
+  };
+
+  const handleStepForward = () => {
+    stateRef.current.running = false;
+    setRunning(false);
+    stepPhysics(0.05);
+    drawFrame();
+  };
 
   return (
-    <div style={{ padding: '30px', background: '#09090b', color: 'white', borderRadius: '16px', fontFamily: 'sans-serif', boxShadow: '0 10px 30px rgba(0,0,0,0.5)' }}>
-      <h2 style={{ textAlign: 'center', marginBottom: '30px', fontSize: '28px', fontWeight: '800', letterSpacing: '-0.5px' }}>Çarpışma Laboratuvarı <span style={{color: '#8b5cf6'}}>(Momentum)</span></h2>
-      
-      <div style={{ display: 'flex', justifyContent: 'space-around', marginBottom: '25px', gap: '20px' }}>
-        <div style={{ background: '#1e1e2f', padding: '20px', borderRadius: '12px', flex: 1, borderTop: '4px solid #ef4444' }}>
-          <h3 style={{ color: '#ef4444', marginBottom: '15px', fontWeight: '600' }}>Kırmızı Blok (Sol)</h3>
-          <label style={{ display: 'block', fontSize: '14px', color: '#d1d5db' }}>Kütle (m1): <strong style={{color: 'white'}}>{m1} kg</strong>
-            <input type="range" min="1" max="10" value={m1} onChange={e => setM1(Number(e.target.value))} style={{ width: '100%', marginTop: '8px' }} disabled={isPlaying} />
-          </label>
-          <label style={{ display: 'block', marginTop: '15px', fontSize: '14px', color: '#d1d5db' }}>İlk Hız (v1): <strong style={{color: 'white'}}>{v1Init} m/s</strong>
-            <input type="range" min="-10" max="10" value={v1Init} onChange={e => {setV1Init(Number(e.target.value)); setV1(Number(e.target.value));}} style={{ width: '100%', marginTop: '8px' }} disabled={isPlaying} />
-          </label>
+    <SimLayout
+      title="Çarpışma Laboratuvarı"
+      children={
+        <div style={{ position: 'relative' }}>
+          <canvas ref={canvasRef} width={CW} height={CH} style={{ width: '100%', height: 'auto', borderRadius: '8px', border: '1px solid #27272a' }} />
+          <AstroTutorObserver message={aiMessage} type={aiType} />
         </div>
+      }
+      controls={
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+             <div style={{ background: '#18181b', padding: '15px', borderRadius: '8px', borderTop: '3px solid #ef4444' }}>
+                <SimSlider label="M1 Kütlesi (kg)" min={1} max={10} step={1} value={m1} onChange={setM1} />
+                <SimSlider label="V1 İlk Hız (m/s)" min={-10} max={10} step={1} value={v1Init} onChange={setV1Init} />
+             </div>
+             <div style={{ background: '#18181b', padding: '15px', borderRadius: '8px', borderTop: '3px solid #3b82f6' }}>
+                <SimSlider label="M2 Kütlesi (kg)" min={1} max={10} step={1} value={m2} onChange={setM2} />
+                <SimSlider label="V2 İlk Hız (m/s)" min={-10} max={10} step={1} value={v2Init} onChange={setV2Init} />
+             </div>
+           </div>
+           
+           <div style={{ display: 'flex', justifyContent: 'center', gap: '10px' }}>
+              <SimButton label="Esnek (Enerji Korunur)" variant={isElastic ? 'primary' : 'secondary'} onClick={() => {setIsElastic(true); handleReset();}} />
+              <SimButton label="Kenetlenme (Esnek Olmayan)" variant={!isElastic ? 'primary' : 'secondary'} onClick={() => {setIsElastic(false); handleReset();}} />
+           </div>
+           
+           <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', marginTop: '1rem', alignItems: 'center' }}>
+              <SimButton label={running ? 'Duraklat' : 'Başlat'} variant="primary" onClick={handleStart} />
+              <SimTimeController disabled={false} timeScale={timeScale} setTimeScale={setTimeScale} onStepForward={handleStepForward} />
+              <SimButton label="Sıfırla" variant="danger" onClick={handleReset} />
+           </div>
 
-        <div style={{ background: '#1e1e2f', padding: '20px', borderRadius: '12px', flex: 1, borderTop: '4px solid #3b82f6' }}>
-          <h3 style={{ color: '#3b82f6', marginBottom: '15px', fontWeight: '600' }}>Mavi Blok (Sağ)</h3>
-          <label style={{ display: 'block', fontSize: '14px', color: '#d1d5db' }}>Kütle (m2): <strong style={{color: 'white'}}>{m2} kg</strong>
-            <input type="range" min="1" max="10" value={m2} onChange={e => setM2(Number(e.target.value))} style={{ width: '100%', marginTop: '8px' }} disabled={isPlaying} />
-          </label>
-          <label style={{ display: 'block', marginTop: '15px', fontSize: '14px', color: '#d1d5db' }}>İlk Hız (v2): <strong style={{color: 'white'}}>{v2Init} m/s</strong>
-            <input type="range" min="-10" max="10" value={v2Init} onChange={e => {setV2Init(Number(e.target.value)); setV2(Number(e.target.value));}} style={{ width: '100%', marginTop: '8px' }} disabled={isPlaying} />
-          </label>
+           <div style={{ background: '#18181b', padding: '15px', borderRadius: '8px', border: '1px solid #27272a', display: 'flex', justifyContent: 'space-between', marginTop: '1rem' }}>
+             <div>
+                <div style={{ fontSize: '12px', color: '#a1a1aa' }}>Zaman</div>
+                <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#f4f4f5' }}>{display.t.toFixed(2)} s</div>
+             </div>
+             <div>
+                <div style={{ fontSize: '12px', color: '#a1a1aa' }}>P Toplam</div>
+                <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#10b981' }}>{display.pTotal.toFixed(1)} kg·m/s</div>
+             </div>
+             <div>
+                <div style={{ fontSize: '12px', color: '#a1a1aa' }}>Ek Toplam</div>
+                <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#f59e0b' }}>{display.keTotal.toFixed(1)} J</div>
+             </div>
+           </div>
         </div>
-      </div>
-
-      <div style={{ display: 'flex', justifyContent: 'center', gap: '15px', marginBottom: '35px' }}>
-        <button onClick={() => setIsElastic(true)} style={{ padding: '12px 24px', background: isElastic ? '#10b981' : '#374151', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: isElastic ? 'bold' : 'normal', transition: 'all 0.2s' }}>Esnek Çarpışma</button>
-        <button onClick={() => setIsElastic(false)} style={{ padding: '12px 24px', background: !isElastic ? '#10b981' : '#374151', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: !isElastic ? 'bold' : 'normal', transition: 'all 0.2s' }}>Esnek Olmayan</button>
-        <div style={{ width: '2px', background: '#374151', margin: '0 10px' }}></div>
-        <button onClick={() => setIsPlaying(!isPlaying)} style={{ padding: '12px 30px', background: '#8b5cf6', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', boxShadow: '0 4px 14px rgba(139, 92, 246, 0.4)', transition: 'all 0.2s' }}>{isPlaying ? 'Duraklat' : 'Başlat'}</button>
-        <button onClick={reset} style={{ padding: '12px 24px', background: '#ef4444', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', transition: 'all 0.2s' }}>Sıfırla</button>
-      </div>
-
-      {/* Simulation Area */}
-      <div style={{ position: 'relative', width: '800px', height: '160px', background: '#1e1e2f', margin: '0 auto', borderRadius: '12px', overflow: 'hidden', borderBottom: '6px solid #4b5563', boxShadow: 'inset 0 4px 20px rgba(0,0,0,0.5)' }}>
-        <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: '100%', background: 'linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px)', backgroundSize: '50px 100%' }}></div>
-        <div style={{ position: 'absolute', left: x1, bottom: 0, width: blockWidth, height: blockWidth, background: 'linear-gradient(135deg, #f87171, #ef4444)', borderRadius: '8px 8px 0 0', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: '18px', boxShadow: '2px -2px 10px rgba(239,68,68,0.3), inset 0 2px 5px rgba(255,255,255,0.3)' }}>m1</div>
-        <div style={{ position: 'absolute', left: x2, bottom: 0, width: blockWidth, height: blockWidth, background: 'linear-gradient(135deg, #60a5fa, #3b82f6)', borderRadius: '8px 8px 0 0', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: '18px', boxShadow: '-2px -2px 10px rgba(59,130,246,0.3), inset 0 2px 5px rgba(255,255,255,0.3)' }}>m2</div>
-      </div>
-
-      {/* Charts Area */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '35px', gap: '20px' }}>
-        <div style={{ flex: 1, background: '#1e1e2f', padding: '20px', borderRadius: '12px' }}>
-          <h4 style={{ color: '#9ca3af', textTransform: 'uppercase', fontSize: '12px', letterSpacing: '1px', marginBottom: '10px' }}>Momentum (p = m*v)</h4>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px', fontSize: '14px' }}>
-             <span>Sol: {p1.toFixed(1)}</span>
-             <span>Sağ: {p2.toFixed(1)}</span>
+      }
+      charts={
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', height: '100%' }}>
+          <div style={{ display: 'flex', gap: '0.5rem', background: '#18181b', padding: '4px', borderRadius: '8px' }}>
+            <button onClick={() => setActiveChart('momentum_vs_t')} style={{ flex: 1, padding: '8px', background: activeChart === 'momentum_vs_t' ? '#27272a' : 'transparent', color: activeChart === 'momentum_vs_t' ? '#fff' : '#a1a1aa', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>Momentum</button>
+            <button onClick={() => setActiveChart('energy_vs_t')} style={{ flex: 1, padding: '8px', background: activeChart === 'energy_vs_t' ? '#27272a' : 'transparent', color: activeChart === 'energy_vs_t' ? '#fff' : '#a1a1aa', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>Enerji</button>
           </div>
-          <p style={{ fontWeight: 'bold', color: '#10b981', fontSize: '18px' }}>Toplam: {pTotal.toFixed(1)} kg·m/s</p>
-          <div style={{ height: '24px', background: '#09090b', borderRadius: '12px', overflow: 'hidden', marginTop: '15px', position: 'relative', border: '1px solid #374151' }}>
-             <div style={{ position: 'absolute', left: '50%', top: 0, bottom: 0, width: '2px', background: '#6b7280', zIndex: 10 }}></div>
-             <div style={{ height: '100%', width: `${Math.min(100, Math.abs(pTotal)*2)}%`, background: pTotal >= 0 ? '#10b981' : '#ef4444', marginLeft: pTotal >= 0 ? '50%' : `calc(50% - ${Math.min(50, Math.abs(pTotal)*2)}%)`, transition: 'all 0.1s ease-out' }}></div>
-          </div>
-        </div>
-        <div style={{ flex: 1, background: '#1e1e2f', padding: '20px', borderRadius: '12px' }}>
-          <h4 style={{ color: '#9ca3af', textTransform: 'uppercase', fontSize: '12px', letterSpacing: '1px', marginBottom: '10px' }}>Kinetik Enerji (KE = 1/2*m*v²)</h4>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px', fontSize: '14px' }}>
-             <span>Sol: {ke1.toFixed(1)}</span>
-             <span>Sağ: {ke2.toFixed(1)}</span>
-          </div>
-          <p style={{ fontWeight: 'bold', color: '#f59e0b', fontSize: '18px' }}>Toplam: {keTotal.toFixed(1)} J</p>
-          <div style={{ height: '24px', background: '#09090b', borderRadius: '12px', overflow: 'hidden', marginTop: '15px', border: '1px solid #374151' }}>
-             <div style={{ height: '100%', width: `${Math.min(100, keTotal/2)}%`, background: 'linear-gradient(90deg, #f59e0b, #fbbf24)', transition: 'all 0.1s ease-out' }}></div>
+          <div style={{ flex: 1, minHeight: '300px' }}>
+            <ResponsiveContainer width="100%" height="100%">
+              {activeChart === 'momentum_vs_t' ? (
+                <LineChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#27272a" />
+                  <XAxis dataKey="t" stroke="#a1a1aa" fontSize={12} tickFormatter={(val) => `${val}s`} />
+                  <YAxis stroke="#a1a1aa" fontSize={12} domain={['auto', 'auto']} />
+                  <Tooltip contentStyle={{ backgroundColor: '#18181b', borderColor: '#27272a', color: '#fff' }} itemStyle={{ color: '#fff' }} />
+                  <Legend />
+                  <Line type="monotone" dataKey="p1" name="P1 (Sol)" stroke="#ef4444" strokeWidth={2} dot={false} isAnimationActive={false} />
+                  <Line type="monotone" dataKey="p2" name="P2 (Sağ)" stroke="#3b82f6" strokeWidth={2} dot={false} isAnimationActive={false} />
+                  <Line type="monotone" dataKey="pTotal" name="P Toplam" stroke="#10b981" strokeWidth={3} dot={false} isAnimationActive={false} />
+                </LineChart>
+              ) : (
+                <LineChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#27272a" />
+                  <XAxis dataKey="t" stroke="#a1a1aa" fontSize={12} tickFormatter={(val) => `${val}s`} />
+                  <YAxis stroke="#a1a1aa" fontSize={12} domain={[0, 'auto']} />
+                  <Tooltip contentStyle={{ backgroundColor: '#18181b', borderColor: '#27272a', color: '#fff' }} itemStyle={{ color: '#fff' }} />
+                  <Legend />
+                  <Line type="monotone" dataKey="keTotal" name="Kinetik Enerji" stroke="#f59e0b" strokeWidth={3} dot={false} isAnimationActive={false} />
+                </LineChart>
+              )}
+            </ResponsiveContainer>
           </div>
         </div>
-      </div>
-    </div>
+      }
+    />
   );
-};
-
-export default CarpismaLaboratuvari;
+}
