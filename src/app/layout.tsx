@@ -2,10 +2,8 @@ import type { Metadata } from "next";
 import { Outfit, Inter } from "next/font/google"; // Switch to Outfit as per user request
 import Script from "next/script";
 import "./globals.css";
-import Navbar from "@/components/Navbar";
 import { ThemeProvider } from "@/components/ThemeProvider";
-import Footer from "@/components/Footer";
-import { CookieConsent } from "@/components/CookieConsent";
+import GlobalLayoutWrapper from "@/components/GlobalLayoutWrapper";
 
 const outfit = Outfit({
   subsets: ["latin"],
@@ -91,12 +89,9 @@ export default function RootLayout({
       <body>
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
           <TimerProvider>
-            <Navbar />
-            <main style={{ paddingTop: "64px", minHeight: "calc(100vh - 200px)" }}>
+            <GlobalLayoutWrapper>
               {children}
-            </main>
-            <Footer />
-            <CookieConsent />
+            </GlobalLayoutWrapper>
           </TimerProvider>
         </ThemeProvider>
       </body>
