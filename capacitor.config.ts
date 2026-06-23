@@ -2,8 +2,12 @@ import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
   appId: 'com.fizikyildizi.app',
-  appName: 'Fizik Yildizi',
-  webDir: 'out'
+  appName: 'Fizik Yıldızı',
+  webDir: 'public',
+  server: {
+    url: 'https://fizikyildizi.vercel.app',
+    cleartext: true
+  }
 };
 
 export default config;
