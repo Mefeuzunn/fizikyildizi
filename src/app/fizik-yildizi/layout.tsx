@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import FizikNavbar from '@/components/fizik-yildizi/FizikNavbar';
+import MobileBottomNav from '@/components/fizik-yildizi/MobileBottomNav';
 import styles from './fizik.module.css';
 
 export const metadata = {
@@ -58,6 +59,8 @@ export default function FizikYildizLayout({ children }: { children: ReactNode })
       <main className={styles.main}>
         {children}
       </main>
+
+      <MobileBottomNav />
     </div>
   );
 }

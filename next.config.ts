@@ -1,9 +1,13 @@
 import type { NextConfig } from "next";
 
+const isMobileExport = process.env.MOBILE_EXPORT === 'true';
+
 const nextConfig: NextConfig = {
   poweredByHeader: false,
   allowedDevOrigins: ['localhost', '127.0.0.1'],
+  output: isMobileExport ? 'export' : undefined,
   async headers() {
+    if (isMobileExport) return [];
     return [
       {
         source: '/(.*)',

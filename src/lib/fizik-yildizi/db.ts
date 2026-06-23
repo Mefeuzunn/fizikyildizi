@@ -1,5 +1,7 @@
 'use client';
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL ? `${process.env.NEXT_PUBLIC_API_URL}/api/fizik-yildizi` : "/api/fizik-yildizi";
+
 export interface Kullanici {
   id: string;
   ad: string;
@@ -67,7 +69,7 @@ export interface OgretmenBildirimi {
 // --- BACKGROUND SYNC UTILITY ---
 const postToApi = (action: string, data: any) => {
   if (typeof window === 'undefined') return;
-  fetch('/api/fizik-yildizi', {
+  fetch(API_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ action, data })
@@ -85,7 +87,7 @@ const postToApi = (action: string, data: any) => {
 export const syncWithServer = async (): Promise<boolean> => {
   if (typeof window === 'undefined') return false;
   try {
-    const res = await fetch('/api/fizik-yildizi');
+    const res = await fetch(API_URL);
     const data = await res.json();
     if (data.success) {
       localStorage.setItem('fizik_kullanicilar', JSON.stringify(data.kullanicilar));
@@ -442,7 +444,7 @@ export const addRozet = (ogrenciId: string, rozetId: string, baslik: string, iko
 
 export const generateVerifyCode = async (email: string): Promise<string | null> => {
   try {
-    const res = await fetch('/api/fizik-yildizi', {
+    const res = await fetch(API_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'generateVerifyCode', data: { email } })
@@ -454,7 +456,7 @@ export const generateVerifyCode = async (email: string): Promise<string | null> 
 
 export const verifyEmailCode = async (email: string, kod: string): Promise<boolean> => {
   try {
-    const res = await fetch('/api/fizik-yildizi', {
+    const res = await fetch(API_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'verifyEmail', data: { email, kod } })

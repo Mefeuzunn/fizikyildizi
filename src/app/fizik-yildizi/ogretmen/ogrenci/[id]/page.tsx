@@ -535,3 +535,5 @@ export default function StudentDetailPage(props: { params: Promise<{ id: string 
     </div>
   );
 }
+
+

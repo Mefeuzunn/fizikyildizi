@@ -232,6 +232,43 @@ export default function GazYasalari() {
     isDraggingPistonRef.current = false;
   };
 
+  const handleTouchStart = (e: React.TouchEvent<HTMLCanvasElement>) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const touch = e.touches[0];
+    const x = (touch.clientX - rect.left) * scaleX;
+    
+    const pistonX = volume + paddingX;
+    if (Math.abs(x - pistonX) < 40) { // wider hit area for touch
+      isDraggingPistonRef.current = true;
+    }
+  };
+
+  const handleTouchMove = (e: React.TouchEvent<HTMLCanvasElement>) => {
+    if (!isDraggingPistonRef.current) return;
+    
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const touch = e.touches[0];
+    const x = (touch.clientX - rect.left) * scaleX;
+    
+    let newVol = x - paddingX;
+    if (newVol < 200) newVol = 200;
+    if (newVol > 600) newVol = 600;
+    setVolume(newVol);
+    
+    e.preventDefault(); // Prevent scrolling while dragging
+  };
+
+  const handleTouchEnd = () => {
+    isDraggingPistonRef.current = false;
+  };
+
   const handleStart = () => {
     if (!running) {
       stateRef.current.lastTs = performance.now();
@@ -275,7 +312,11 @@ export default function GazYasalari() {
             onMouseMove={handleMouseMove}
             onMouseUp={handleMouseUp}
             onMouseLeave={handleMouseUp}
-            style={{ width: '100%', height: 'auto', borderRadius: '8px', border: '1px solid #27272a' }} 
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
+            onTouchCancel={handleTouchEnd}
+            style={{ width: '100%', height: 'auto', borderRadius: '8px', border: '1px solid #27272a', touchAction: 'none' }} 
           />
           <AstroTutorObserver message={aiMessage} type={aiType} />
         </div>

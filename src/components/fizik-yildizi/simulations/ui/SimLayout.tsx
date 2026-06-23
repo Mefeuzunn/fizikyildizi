@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { Maximize, Minimize, Download, Target } from 'lucide-react';
+import styles from '@/app/fizik-yildizi/fizik.module.css';
 
 interface SimLayoutProps {
   title: string;
@@ -27,13 +28,8 @@ export const SimLayout: React.FC<SimLayoutProps> = ({ title, children, controls,
   return (
     <div 
       ref={containerRef}
-      style={{
-        display: 'flex', flexDirection: 'column', gap: '1rem',
-        background: isFullscreen ? '#09090b' : 'transparent',
-        padding: isFullscreen ? '2rem' : '0',
-        width: '100%', height: isFullscreen ? '100vh' : 'auto',
-        overflowY: isFullscreen ? 'auto' : 'visible'
-      }}
+      className={`${styles.simLayoutContainer} ${isFullscreen ? styles.isFullscreen : ''}`}
+      style={!isFullscreen ? { background: 'transparent' } : undefined}
     >
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <h3 style={{ margin: 0, color: '#f4f4f5', fontWeight: 600, fontSize: '1.25rem' }}>{title}</h3>
@@ -71,19 +67,12 @@ export const SimLayout: React.FC<SimLayoutProps> = ({ title, children, controls,
         </div>
       )}
 
-      <div style={{ display: 'flex', gap: '1rem', flexDirection: isFullscreen ? 'row' : 'column' }}>
-        <div style={{ 
-          flex: 1, 
-          background: '#000', borderRadius: '12px', border: '1px solid #27272a',
-          position: 'relative', overflow: 'hidden', minHeight: '400px'
-        }}>
+      <div className={`${styles.simLayoutRow} ${isFullscreen ? styles.isFullscreen : ''}`}>
+        <div className={styles.simCanvasContainer}>
           {children}
         </div>
         
-        <div style={{ 
-          width: isFullscreen ? '300px' : '100%', 
-          display: 'flex', flexDirection: 'column', gap: '1rem' 
-        }}>
+        <div className={`${styles.simLayoutSidebar} ${isFullscreen ? styles.isFullscreen : ''}`}>
           <div style={{ 
             background: 'rgba(255,255,255,0.02)', border: '1px solid #27272a',
             borderRadius: '12px', padding: '1rem', display: 'flex', flexDirection: 'column', gap: '1rem'

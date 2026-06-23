@@ -32,6 +32,7 @@ export const metadata: Metadata = {
   },
   description: "Kalkula ile finans, eğitim, health, vergi ve daha fazlasını kapsayan 60+ ücretsiz hesaplama aracı, not defteri, takvim ve belge dönüştürücü tek platformda.",
   keywords: ["hesaplama", "hesap makinesi", "kredi hesaplama", "vergi hesaplama", "kalkula", "birim dönüştürücü"],
+  manifest: "/manifest.json",
   alternates: {
     canonical: "/",
   },

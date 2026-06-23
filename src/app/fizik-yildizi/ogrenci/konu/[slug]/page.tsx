@@ -1623,3 +1623,5 @@ export default function KonuDetayPage() {
     </div>
   );
 }
+
+
