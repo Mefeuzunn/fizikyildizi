@@ -190,6 +190,48 @@ export default function GazYasalari() {
     }
   }, [temperature, volume, drawFrame, running]);
 
+  const isDraggingPistonRef = useRef(false);
+
+  const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const x = (e.clientX - rect.left) * scaleX;
+    
+    const pistonX = volume + paddingX;
+    if (Math.abs(x - pistonX) < 30) {
+      isDraggingPistonRef.current = true;
+    }
+  };
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const x = (e.clientX - rect.left) * scaleX;
+    
+    if (isDraggingPistonRef.current) {
+      let newVol = x - paddingX;
+      if (newVol < 200) newVol = 200;
+      if (newVol > 600) newVol = 600;
+      setVolume(newVol);
+    } else {
+      const pistonX = volume + paddingX;
+      if (Math.abs(x - pistonX) < 30) {
+        canvas.style.cursor = 'ew-resize';
+      } else {
+        canvas.style.cursor = 'default';
+      }
+    }
+  };
+
+  const handleMouseUp = () => {
+    isDraggingPistonRef.current = false;
+  };
+
   const handleStart = () => {
     if (!running) {
       stateRef.current.lastTs = performance.now();
@@ -225,7 +267,16 @@ export default function GazYasalari() {
       title="İdeal Gaz Yasaları (P, V, T)"
       children={
         <div style={{ position: 'relative' }}>
-          <canvas ref={canvasRef} width={CW} height={CH} style={{ width: '100%', height: 'auto', borderRadius: '8px', border: '1px solid #27272a' }} />
+          <canvas 
+            ref={canvasRef} 
+            width={CW} 
+            height={CH} 
+            onMouseDown={handleMouseDown}
+            onMouseMove={handleMouseMove}
+            onMouseUp={handleMouseUp}
+            onMouseLeave={handleMouseUp}
+            style={{ width: '100%', height: 'auto', borderRadius: '8px', border: '1px solid #27272a' }} 
+          />
           <AstroTutorObserver message={aiMessage} type={aiType} />
         </div>
       }
