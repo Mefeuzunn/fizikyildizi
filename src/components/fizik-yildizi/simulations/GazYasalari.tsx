@@ -1,17 +1,41 @@
-import React, { useState, useEffect, useRef } from 'react';
+'use client';
 
-const GazYasalari: React.FC = () => {
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { SimLayout, SimSlider, SimButton, AstroTutorObserver, SimTimeController } from './ui';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+
+const CW = 800;
+const CH = 380;
+
+export default function GazYasalari() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const animRef = useRef<number>(0);
+
   const [temperature, setTemperature] = useState(300); // Kelvin
   const [volume, setVolume] = useState(500); // representation of width
-  const [pressure, setPressure] = useState(0);
-
-  const particlesRef = useRef<Array<{x: number, y: number, vx: number, vy: number}>>([]);
-  const requestRef = useRef<number | null>(null);
   
+  const [running, setRunning] = useState(true);
+  const [timeScale, setTimeScale] = useState(1);
+  const [aiMessage, setAiMessage] = useState<string | null>(null);
+  const [aiType, setAiType] = useState<'info'|'warning'|'success'>('info');
+
+  const [chartData, setChartData] = useState<{t: number, pressure: number}[]>([]);
+  const chartUpdateCounter = useRef(0);
+
+  const [display, setDisplay] = useState({ pressure: 0, t: 0 });
+
   const numParticles = 200;
   const radius = 4;
-  const canvasHeight = 350;
+  const canvasHeight = 300;
+  const paddingY = (CH - canvasHeight) / 2; // center vertically
+  const paddingX = 50;
+
+  const particlesRef = useRef<Array<{x: number, y: number, vx: number, vy: number}>>([]);
+  const stateRef = useRef({
+    t: 0,
+    lastTs: 0,
+    running: true
+  });
 
   // Initialize particles
   useEffect(() => {
@@ -27,42 +51,82 @@ const GazYasalari: React.FC = () => {
     particlesRef.current = particles;
   }, []); // Run once
 
-  // Simulation Loop
-  const updateParticles = () => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+  // When volume changes, adjust particles that might be outside
+  useEffect(() => {
+    particlesRef.current.forEach(p => {
+      if (p.x > volume - radius) p.x = volume - radius * 2;
+    });
     
+    if (volume < 300 && temperature > 600) {
+      setAiMessage('Dikkat! Hacim çok küçük ve sıcaklık çok yüksek. Basınç tehlikeli seviyelere ulaştı! (P = nRT/V)');
+      setAiType('warning');
+    } else if (volume > 600 && temperature < 200) {
+      setAiMessage('Hacim arttı, sıcaklık düştü. Taneciklerin çeperlere çarpma hızı ve sıklığı azaldığı için basınç çok düştü.');
+      setAiType('info');
+    }
+  }, [volume, temperature]);
+
+  const getParticleColor = (temp: number) => {
+    if (temp > 500) return '#ef4444'; // red
+    if (temp < 200) return '#3b82f6'; // blue
+    return '#10b981'; // green
+  };
+
+  const drawSystem = (ctx: CanvasRenderingContext2D, currentTemp: number, currentVol: number) => {
+    ctx.fillStyle = '#050a1a';
+    ctx.fillRect(0, 0, CW, CH);
+
+    ctx.save();
+    ctx.translate(paddingX, paddingY);
+
     // Draw container boundaries
     ctx.strokeStyle = '#4b5563';
     ctx.lineWidth = 6;
     ctx.lineJoin = 'round';
-    ctx.strokeRect(3, 3, volume, canvasHeight - 6);
+    ctx.strokeRect(3, 3, currentVol, canvasHeight - 6);
     
     // Draw movable piston
     ctx.fillStyle = '#9ca3af';
-    ctx.fillRect(volume, 0, 24, canvasHeight);
+    ctx.fillRect(currentVol, 0, 24, canvasHeight);
     
     // Piston details
     ctx.fillStyle = '#4b5563';
-    ctx.fillRect(volume + 24, canvasHeight/2 - 10, 100, 20); // Handle
+    ctx.fillRect(currentVol + 24, canvasHeight/2 - 10, 100, 20); // Handle
 
+    // Draw particles
+    const pColor = getParticleColor(currentTemp);
+    
+    particlesRef.current.forEach(p => {
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, radius, 0, Math.PI * 2);
+      ctx.fillStyle = pColor;
+      ctx.shadowBlur = 4;
+      ctx.shadowColor = pColor;
+      ctx.fill();
+    });
+
+    ctx.restore();
+  };
+
+  const stepPhysics = (dt: number) => {
+    const s = stateRef.current;
+    
     // Speed scaling based on temperature (Kinetic Energy proportional to T)
+    // v_rms = sqrt(3RT/M) -> speed is proportional to sqrt(T)
     const speedScale = Math.sqrt(temperature / 300) * 3.5;
+    
+    // Time scaling for visual speed
+    const visualDt = dt * 60; // 60fps baseline
 
     particlesRef.current.forEach(p => {
-      // Normalize velocity vector
       const currentSpeed = Math.sqrt(p.vx * p.vx + p.vy * p.vy);
       if (currentSpeed !== 0) {
         p.vx = (p.vx / currentSpeed) * speedScale;
         p.vy = (p.vy / currentSpeed) * speedScale;
       }
 
-      p.x += p.vx;
-      p.y += p.vy;
+      p.x += p.vx * visualDt;
+      p.y += p.vy * visualDt;
 
       // Wall collisions
       if (p.x - radius < 3) {
@@ -81,97 +145,138 @@ const GazYasalari: React.FC = () => {
         p.y = canvasHeight - 3 - radius;
         p.vy *= -1;
       }
-
-      // Draw particle
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, radius, 0, Math.PI * 2);
-      
-      // Color gradient based on temperature
-      if (temperature > 400) {
-        ctx.fillStyle = '#ef4444';
-      } else if (temperature < 200) {
-        ctx.fillStyle = '#3b82f6';
-      } else {
-        ctx.fillStyle = '#10b981';
-      }
-      
-      ctx.shadowBlur = 4;
-      ctx.shadowColor = ctx.fillStyle;
-      ctx.fill();
-      ctx.shadowBlur = 0; // reset
     });
 
-    // P = nRT/V (Ideal gas law calculation for UI)
-    const calculatedPressure = (100 * temperature) / volume;
-    setPressure(calculatedPressure);
-
-    requestRef.current = requestAnimationFrame(updateParticles);
+    s.t += dt;
   };
 
+  const drawFrame = useCallback(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d')!;
+    const st = stateRef.current;
+
+    if (st.running) {
+      const now = performance.now();
+      const realDt = st.lastTs ? (now - st.lastTs) / 1000 : 0.016;
+      st.lastTs = now;
+      const simDt = Math.min(realDt, 0.05) * timeScale;
+      stepPhysics(simDt);
+    }
+
+    drawSystem(ctx, temperature, volume);
+    
+    // Ideal Gas Law: PV = nRT -> P = (nR)T/V
+    // Arbitrary constant for display: nR = 100
+    const calculatedPressure = (100 * temperature) / volume;
+    setDisplay({ pressure: calculatedPressure, t: st.t });
+
+    if (st.running) {
+      chartUpdateCounter.current++;
+      if (chartUpdateCounter.current % 5 === 0) {
+        setChartData(prev => {
+          const newData = [...prev, { t: Number(st.t.toFixed(2)), pressure: Number(calculatedPressure.toFixed(1)) }];
+          if (newData.length > 200) return newData.slice(newData.length - 200);
+          return newData;
+        });
+      }
+      animRef.current = requestAnimationFrame(drawFrame);
+    }
+  }, [temperature, volume, timeScale]);
+
   useEffect(() => {
-    requestRef.current = requestAnimationFrame(updateParticles);
-    return () => { if (requestRef.current) cancelAnimationFrame(requestRef.current); };
-  }, [temperature, volume]);
+    if (!running) {
+      drawFrame();
+    }
+  }, [temperature, volume, drawFrame, running]);
+
+  const handleStart = () => {
+    if (!running) {
+      stateRef.current.lastTs = performance.now();
+      stateRef.current.running = true;
+      setRunning(true);
+      animRef.current = requestAnimationFrame(drawFrame);
+    } else {
+      stateRef.current.running = false;
+      setRunning(false);
+    }
+  };
+
+  const handleReset = () => {
+    // Keep particles, just reset charts and time?
+    // Actually, maybe reset temp/vol too
+    setTemperature(300);
+    setVolume(500);
+    stateRef.current.t = 0;
+    setChartData([]);
+    setAiMessage(null);
+    if (!running) drawFrame();
+  };
+
+  const handleStepForward = () => {
+    stateRef.current.running = false;
+    setRunning(false);
+    stepPhysics(0.05);
+    drawFrame();
+  };
 
   return (
-    <div style={{ padding: '30px', background: '#09090b', color: 'white', borderRadius: '16px', fontFamily: 'sans-serif', boxShadow: '0 10px 30px rgba(0,0,0,0.5)' }}>
-      <h2 style={{ textAlign: 'center', marginBottom: '30px', fontSize: '28px', fontWeight: '800', letterSpacing: '-0.5px' }}>İdeal Gaz Yasaları <span style={{color: '#f59e0b'}}>(Termodinamik)</span></h2>
-      
-      <div style={{ display: 'flex', gap: '30px', marginBottom: '30px' }}>
-        <div style={{ flex: 1, background: '#1e1e2f', padding: '25px', borderRadius: '12px', borderLeft: '4px solid #ef4444' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-             <h3 style={{ color: '#d1d5db', fontSize: '16px', textTransform: 'uppercase', letterSpacing: '1px' }}>Sıcaklık (T): <strong style={{color: '#ef4444', fontSize: '22px', marginLeft: '10px'}}>{temperature} K</strong></h3>
-             <div style={{ display: 'flex', gap: '10px' }}>
-               <button onClick={() => setTemperature(t => Math.min(t + 50, 800))} style={{ padding: '8px 20px', background: 'linear-gradient(135deg, #f87171, #ef4444)', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', boxShadow: '0 4px 10px rgba(239, 68, 68, 0.3)' }}>Isıt (+)</button>
-               <button onClick={() => setTemperature(t => Math.max(t - 50, 50))} style={{ padding: '8px 20px', background: 'linear-gradient(135deg, #60a5fa, #3b82f6)', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', boxShadow: '0 4px 10px rgba(59, 130, 246, 0.3)' }}>Soğut (-)</button>
+    <SimLayout
+      title="İdeal Gaz Yasaları (P, V, T)"
+      children={
+        <div style={{ position: 'relative' }}>
+          <canvas ref={canvasRef} width={CW} height={CH} style={{ width: '100%', height: 'auto', borderRadius: '8px', border: '1px solid #27272a' }} />
+          <AstroTutorObserver message={aiMessage} type={aiType} />
+        </div>
+      }
+      controls={
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+           <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1rem' }}>
+             <div style={{ background: '#18181b', padding: '15px', borderRadius: '8px', borderTop: '3px solid #ef4444' }}>
+                <SimSlider label="Sıcaklık (Kelvin)" min={50} max={800} step={10} value={temperature} onChange={setTemperature} />
              </div>
+             <div style={{ background: '#18181b', padding: '15px', borderRadius: '8px', borderTop: '3px solid #10b981' }}>
+                <SimSlider label="Hacim (Birim)" min={200} max={600} step={10} value={volume} onChange={setVolume} />
+             </div>
+           </div>
+           
+           <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', marginTop: '1rem', alignItems: 'center' }}>
+              <SimButton label={running ? 'Duraklat' : 'Başlat'} variant="primary" onClick={handleStart} />
+              <SimTimeController disabled={false} timeScale={timeScale} setTimeScale={setTimeScale} onStepForward={handleStepForward} />
+              <SimButton label="Sıfırla" variant="danger" onClick={handleReset} />
+           </div>
+
+           <div style={{ background: '#18181b', padding: '15px', borderRadius: '8px', border: '1px solid #27272a', display: 'flex', justifyContent: 'space-around', alignItems: 'center' }}>
+             <div style={{ textAlign: 'center' }}>
+               <span style={{ fontSize: '12px', color: '#a1a1aa' }}>Basınç (P)</span><br/>
+               <span style={{ color: '#f59e0b', fontSize: '24px', fontWeight: 'bold' }}>{display.pressure.toFixed(1)} atm</span>
+             </div>
+             <div style={{ textAlign: 'center' }}>
+               <span style={{ fontSize: '12px', color: '#a1a1aa' }}>Durum Denklemi</span><br/>
+               <span style={{ color: '#6366f1', fontSize: '16px', fontWeight: 'bold', fontFamily: 'monospace' }}>P · V = n · R · T</span>
+             </div>
+           </div>
+        </div>
+      }
+      charts={
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', height: '100%' }}>
+          <div style={{ display: 'flex', gap: '0.5rem', background: '#18181b', padding: '4px', borderRadius: '8px' }}>
+            <button style={{ flex: 1, padding: '8px', background: '#27272a', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>Basınç vs Zaman</button>
           </div>
-          
-          <div style={{ marginTop: '30px', borderTop: '1px solid #374151', paddingTop: '20px' }}>
-             <h3 style={{ color: '#d1d5db', fontSize: '16px', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '15px' }}>Hacim (V): <strong style={{color: '#10b981', fontSize: '22px', marginLeft: '10px'}}>{volume} Birim</strong></h3>
-             <input type="range" min="200" max="750" value={volume} onChange={(e) => {
-               const newVol = Number(e.target.value);
-               particlesRef.current.forEach(p => {
-                  if (p.x > newVol - radius - 3) p.x = newVol - radius * 2 - 3;
-               });
-               setVolume(newVol);
-             }} style={{ width: '100%', cursor: 'pointer', accentColor: '#10b981' }} />
+          <div style={{ flex: 1, minHeight: '300px' }}>
+            <ResponsiveContainer width="100%" height="100%">
+               <LineChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#27272a" />
+                  <XAxis dataKey="t" stroke="#a1a1aa" fontSize={12} tickFormatter={(val) => `${val}s`} />
+                  <YAxis stroke="#a1a1aa" fontSize={12} domain={[0, 'auto']} />
+                  <Tooltip contentStyle={{ backgroundColor: '#18181b', borderColor: '#27272a', color: '#fff' }} itemStyle={{ color: '#fff' }} />
+                  <Legend />
+                  <Line type="monotone" dataKey="pressure" name="Basınç (atm)" stroke="#f59e0b" strokeWidth={2} dot={false} isAnimationActive={false} />
+                </LineChart>
+            </ResponsiveContainer>
           </div>
         </div>
-
-        <div style={{ width: '280px', background: '#1e1e2f', padding: '25px', borderRadius: '12px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', borderLeft: '4px solid #8b5cf6' }}>
-          <h3 style={{ marginBottom: '25px', color: '#d1d5db', fontSize: '16px', textTransform: 'uppercase', letterSpacing: '1px' }}>Basınç Ölçer (P)</h3>
-          
-          <div style={{ position: 'relative', width: '140px', height: '140px', borderRadius: '50%', background: 'linear-gradient(135deg, #1f2937, #111827)', border: '6px solid #4b5563', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: 'inset 0 4px 10px rgba(0,0,0,0.5), 0 5px 15px rgba(0,0,0,0.3)' }}>
-            {/* Tick marks */}
-            {[0, 45, 90, 135, 180].map((deg, i) => (
-              <div key={i} style={{ position: 'absolute', width: '2px', height: '10px', background: '#9ca3af', top: '4px', transformOrigin: 'bottom center', transform: `rotate(${deg - 90}deg) translateY(60px)` }}></div>
-            ))}
-            
-            <div style={{ position: 'absolute', bottom: '25px', fontSize: '20px', fontWeight: 'bold', color: '#f59e0b' }}>{pressure.toFixed(1)} atm</div>
-            
-            {/* Needle */}
-            <div style={{ position: 'absolute', width: '4px', height: '60px', background: '#ef4444', bottom: '50%', transformOrigin: 'bottom center', transform: `rotate(${-90 + Math.min(pressure * 1.5, 180)}deg)`, borderRadius: '2px', transition: 'transform 0.2s cubic-bezier(0.4, 0, 0.2, 1)', boxShadow: '0 0 5px rgba(239, 68, 68, 0.5)' }}></div>
-            
-            <div style={{ position: 'absolute', width: '16px', height: '16px', background: '#fff', borderRadius: '50%', boxShadow: '0 2px 5px rgba(0,0,0,0.5)' }}></div>
-          </div>
-          
-          <div style={{ marginTop: '25px', padding: '10px 20px', background: '#09090b', borderRadius: '8px', border: '1px solid #374151' }}>
-            <p style={{ fontSize: '16px', color: '#9ca3af', fontWeight: 'bold', letterSpacing: '2px' }}>P = <span style={{color: 'white'}}>nRT</span> / <span style={{color: '#10b981'}}>V</span></p>
-          </div>
-        </div>
-      </div>
-
-      <div style={{ display: 'flex', justifyContent: 'center', background: '#1e1e2f', padding: '25px', borderRadius: '12px', boxShadow: 'inset 0 4px 20px rgba(0,0,0,0.5)' }}>
-        <canvas 
-          ref={canvasRef} 
-          width={880} 
-          height={canvasHeight} 
-          style={{ background: '#09090b', borderRadius: '8px', boxShadow: 'inset 0 0 20px rgba(0,0,0,0.8)' }} 
-        />
-      </div>
-    </div>
+      }
+    />
   );
-};
-
-export default GazYasalari;
+}
