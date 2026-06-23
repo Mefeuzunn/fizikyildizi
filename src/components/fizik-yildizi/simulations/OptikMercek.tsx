@@ -1,114 +1,29 @@
 'use client';
 
-import { useRef, useEffect, useState, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { SimLayout, SimSlider, SimButton, AstroTutorObserver } from './ui';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ReferenceLine } from 'recharts';
 
-const CW = 640;
+const CW = 800;
 const CH = 380;
 const MID_Y = CH / 2;
 const MID_X = CW / 2;
+const SCALE = 4; // Pixels per cm
 
-// Pixels per cm
-const SCALE = 4;
-
-interface OpticalParams {
-  f: number;
-  doDist: number;
-  ho: number;
-  lensType: 'convex' | 'concave';
-}
-
-function drawOpticsDiagram(ctx: CanvasRenderingContext2D, p: OpticalParams) {
-  const { f, doDist, ho, lensType } = p;
+export default function OptikMercek() {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
   
-  // Clear and draw background
-  ctx.fillStyle = '#050a1a';
-  ctx.fillRect(0, 0, CW, CH);
+  const [f, setF] = useState(20);
+  const [doDist, setDoDist] = useState(40);
+  const [ho, setHo] = useState(20);
+  const [lensType, setLensType] = useState<'convex' | 'concave'>('convex');
+  
+  const [aiMessage, setAiMessage] = useState<string | null>(null);
+  const [aiType, setAiType] = useState<'info'|'warning'|'success'>('info');
 
-  // Grid
-  ctx.strokeStyle = 'rgba(255,255,255,0.03)';
-  ctx.lineWidth = 1;
-  for (let x = 0; x < CW; x += 30) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, CH); ctx.stroke(); }
-  for (let y = 0; y < CH; y += 30) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(CW, y); ctx.stroke(); }
+  const [chartData, setChartData] = useState<{doDist: number, magnification: number}[]>([]);
 
-  const scaleF = f * SCALE;
-  const scaleDo = doDist * SCALE;
-  const scaleHo = ho * SCALE;
-
-  // 1. Draw Optical Axis
-  ctx.strokeStyle = 'rgba(255,255,255,0.15)';
-  ctx.lineWidth = 1.5;
-  ctx.beginPath();
-  ctx.moveTo(0, MID_Y);
-  ctx.lineTo(CW, MID_Y);
-  ctx.stroke();
-
-  // 2. Draw Lens in Center
-  ctx.strokeStyle = '#06b6d4';
-  ctx.lineWidth = 3;
-  ctx.beginPath();
-  ctx.moveTo(MID_X, 40);
-  ctx.lineTo(MID_X, CH - 40);
-  ctx.stroke();
-
-  // Lens arrows / markers
-  ctx.fillStyle = '#06b6d4';
-  if (lensType === 'convex') {
-    // Arrow heads pointing outwards
-    ctx.beginPath();
-    ctx.moveTo(MID_X - 8, 48); ctx.lineTo(MID_X, 40); ctx.lineTo(MID_X + 8, 48);
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.moveTo(MID_X - 8, CH - 48); ctx.lineTo(MID_X, CH - 40); ctx.lineTo(MID_X + 8, CH - 48);
-    ctx.stroke();
-  } else {
-    // Arrow heads pointing inwards
-    ctx.beginPath();
-    ctx.moveTo(MID_X - 8, 40); ctx.lineTo(MID_X, 48); ctx.lineTo(MID_X + 8, 40);
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.moveTo(MID_X - 8, CH - 40); ctx.lineTo(MID_X, CH - 48); ctx.lineTo(MID_X + 8, CH - 40);
-    ctx.stroke();
-  }
-
-  // 3. Focal points (F) and 2F
-  const drawFocusPoint = (x: number, label: string) => {
-    ctx.fillStyle = '#f59e0b';
-    ctx.beginPath();
-    ctx.arc(x, MID_Y, 4, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.font = '10px monospace';
-    ctx.fillText(label, x - 6, MID_Y + 18);
-  };
-
-  drawFocusPoint(MID_X - scaleF, 'F1');
-  drawFocusPoint(MID_X - 2 * scaleF, '2F1');
-  drawFocusPoint(MID_X + scaleF, 'F2');
-  drawFocusPoint(MID_X + 2 * scaleF, '2F2');
-
-  // 4. Draw Object (Arrow) on Left
-  const objX = MID_X - scaleDo;
-  const objY = MID_Y - scaleHo;
-
-  ctx.strokeStyle = '#a78bfa';
-  ctx.lineWidth = 4;
-  ctx.beginPath();
-  ctx.moveTo(objX, MID_Y);
-  ctx.lineTo(objX, objY);
-  ctx.stroke();
-
-  // Object Arrow Head
-  ctx.fillStyle = '#a78bfa';
-  ctx.beginPath();
-  ctx.moveTo(objX - 6, objY + 8);
-  ctx.lineTo(objX, objY);
-  ctx.lineTo(objX + 6, objY + 8);
-  ctx.fill();
-
-  ctx.font = '11px monospace';
-  ctx.fillText('Nesne', objX - 18, objY - 10);
-
-  // 5. Physics Math
-  // 1/f = 1/do + 1/di
+  // Physics Math
   let di = 0;
   let isInfinity = false;
   let isVirtual = false;
@@ -126,309 +41,281 @@ function drawOpticsDiagram(ctx: CanvasRenderingContext2D, p: OpticalParams) {
     isVirtual = true;
   }
 
-  const scaleDi = di * SCALE;
-  const imgX = MID_X + scaleDi;
   const magnification = isInfinity ? 0 : -di / doDist;
-  const scaleHi = scaleHo * magnification;
-  const imgY = MID_Y - scaleHi;
+  const hi = ho * magnification;
 
-  // 6. Draw Image (Arrow) if not at infinity
-  if (!isInfinity) {
-    ctx.save();
-    ctx.strokeStyle = isVirtual ? '#f43f5e' : '#10b981';
-    ctx.lineWidth = 3.5;
-    if (isVirtual) {
-      ctx.setLineDash([4, 4]); // virtual image is dashed
-    }
-    ctx.beginPath();
-    ctx.moveTo(imgX, MID_Y);
-    ctx.lineTo(imgX, imgY);
-    ctx.stroke();
-
-    // Image Arrow Head
-    ctx.fillStyle = isVirtual ? '#f43f5e' : '#10b981';
-    ctx.beginPath();
-    const arrowDir = scaleHi > 0 ? 1 : -1;
-    ctx.moveTo(imgX - 5, imgY + 8 * arrowDir);
-    ctx.lineTo(imgX, imgY);
-    ctx.lineTo(imgX + 5, imgY + 8 * arrowDir);
-    ctx.fill();
-
-    ctx.font = '11px monospace';
-    ctx.fillText(isVirtual ? 'Sanal Grnt.' : 'Gerçek Grnt.', imgX - 35, imgY - 10 * arrowDir);
-    ctx.restore();
-  } else {
-    ctx.fillStyle = '#64748b';
-    ctx.font = '12px monospace';
-    ctx.fillText('Görüntü Sonsuzda (Paralel Işınlar)', MID_X + 60, MID_Y - 40);
-  }
-
-  // 7. Ray Tracing (Only draw if do > 0.5)
-  if (doDist > 1) {
-    ctx.save();
-
-    // --- RAY 1: Parallel to Optical Axis, then through Focus F2 (or diverging from F1) ---
-    ctx.strokeStyle = '#ef4444';
-    ctx.lineWidth = 1.25;
-    
-    // Ray to lens
-    ctx.beginPath();
-    ctx.moveTo(objX, objY);
-    ctx.lineTo(MID_X, objY);
-    ctx.stroke();
-
-    // Refracted ray
-    ctx.beginPath();
-    ctx.moveTo(MID_X, objY);
-    if (lensType === 'convex') {
-      // Goes through F2
-      const dx = MID_X + scaleF - MID_X;
-      const dy = MID_Y - objY;
-      const t = CW / dx;
-      ctx.lineTo(MID_X + dx * t, objY + dy * t);
-    } else {
-      // Diverges as if coming from F1 (left focus)
-      const dx = MID_X - (MID_X - scaleF);
-      const dy = objY - MID_Y;
-      const t = CW / dx;
-      ctx.lineTo(MID_X + dx * t, objY + dy * t);
-
-      // Dashed virtual projection back to F1
-      ctx.beginPath();
-      ctx.strokeStyle = 'rgba(239,68,68,0.4)';
-      ctx.setLineDash([3, 3]);
-      ctx.moveTo(MID_X, objY);
-      ctx.lineTo(MID_X - scaleF, MID_Y);
-      ctx.stroke();
-      ctx.setLineDash([]);
-      ctx.strokeStyle = '#ef4444';
-    }
-    ctx.stroke();
-
-    // --- RAY 2: Straight through the optical center ---
-    ctx.strokeStyle = '#10b981';
-    ctx.beginPath();
-    ctx.moveTo(objX, objY);
-    const centerT = CW / (MID_X - objX);
-    ctx.lineTo(objX + (MID_X - objX) * centerT, objY + (MID_Y - objY) * centerT);
-    ctx.stroke();
-
-    // --- RAY 3: Through Focus F1 to lens, then parallel (or aligned with F2) ---
-    ctx.strokeStyle = '#3b82f6';
-    
-    if (lensType === 'convex') {
-      // Goes through F1 (left focus)
-      const f1X = MID_X - scaleF;
-      const dx = MID_X - objX;
-      const dy = MID_Y - objY; // slope through F1
-      // Calculate where it hits the lens
-      const lensIntersectY = objY + ((MID_X - objX) / (f1X - objX)) * (MID_Y - objY);
+  useEffect(() => {
+    // Generate chart data for the current focal length
+    const data = [];
+    for (let d = 5; d <= 80; d += 2) {
+      if (Math.abs(d - f) < 0.5 && lensType === 'convex') {
+        data.push({ doDist: d, magnification: 0 }); // infinity
+        continue;
+      }
+      let tempDi = 0;
+      if (lensType === 'convex') tempDi = 1 / (1 / f - 1 / d);
+      else tempDi = 1 / (-1 / f - 1 / d);
       
-      // Ray to lens
-      ctx.beginPath();
-      ctx.moveTo(objX, objY);
-      ctx.lineTo(MID_X, lensIntersectY);
-      ctx.stroke();
+      let mag = -tempDi / d;
+      // cap mag for chart readability
+      if (mag > 10) mag = 10;
+      if (mag < -10) mag = -10;
+      data.push({ doDist: d, magnification: Number(mag.toFixed(2)) });
+    }
+    setChartData(data);
+  }, [f, lensType]);
 
-      // Refracted parallel ray
-      ctx.beginPath();
-      ctx.moveTo(MID_X, lensIntersectY);
-      ctx.lineTo(CW, lensIntersectY);
-      ctx.stroke();
+  useEffect(() => {
+    if (isInfinity) {
+      setAiMessage('Cisim tam odak noktasında (F). Kırılan ışınlar paralel gider, görüntü sonsuzda oluşur!');
+      setAiType('warning');
+    } else if (lensType === 'convex') {
+      if (doDist < f) {
+        setAiMessage('Cisim odak noktası ile mercek arasında. Görüntü sanal (zahiri), düz ve cisimden büyük (Büyüteç etkisi).');
+        setAiType('info');
+      } else if (Math.abs(doDist - 2 * f) < 0.5) {
+        setAiMessage('Cisim 2F noktasında. Görüntü de diğer taraftaki 2F noktasında, ters ve cisimle aynı boyda.');
+        setAiType('success');
+      } else if (doDist > 2 * f) {
+        setAiMessage('Cisim 2F\'nin ötesinde. Görüntü F ile 2F arasında, ters ve cisimden küçük.');
+        setAiType('info');
+      } else {
+        setAiMessage('Cisim F ile 2F arasında. Görüntü 2F\'nin ötesinde, ters ve cisimden büyük.');
+        setAiType('info');
+      }
     } else {
-      // Aligned with F2 (right focus)
-      const f2X = MID_X + scaleF;
-      const lensIntersectY = MID_Y + ((MID_X - f2X) / (f2X - objX)) * (objY - MID_Y);
-
-      // Ray to lens
-      ctx.beginPath();
-      ctx.moveTo(objX, objY);
-      ctx.lineTo(MID_X, lensIntersectY);
-      ctx.stroke();
-
-      // Refracted parallel ray
-      ctx.beginPath();
-      ctx.moveTo(MID_X, lensIntersectY);
-      ctx.lineTo(CW, lensIntersectY);
-      ctx.stroke();
-
-      // Dashed projection to F2
-      ctx.beginPath();
-      ctx.strokeStyle = 'rgba(59,130,246,0.4)';
-      ctx.setLineDash([3, 3]);
-      ctx.moveTo(MID_X, lensIntersectY);
-      ctx.lineTo(f2X, MID_Y);
-      ctx.stroke();
-      ctx.setLineDash([]);
+      setAiMessage('Kalın kenarlı (ıraksak) mercekte görüntü her zaman sanal, düz ve cisimden küçüktür.');
+      setAiType('info');
     }
+  }, [doDist, f, lensType, isInfinity]);
 
-    // --- Virtual image projections (if image is virtual) ---
-    if (isVirtual && !isInfinity) {
-      ctx.save();
-      ctx.strokeStyle = 'rgba(255,255,255,0.25)';
-      ctx.lineWidth = 1;
-      ctx.setLineDash([3, 3]);
-      // Projection 1 (Parallel ray back to image)
-      ctx.beginPath();
-      ctx.moveTo(MID_X, objY);
-      ctx.lineTo(imgX, imgY);
-      ctx.stroke();
-      // Projection 2 (Center ray back to image)
-      ctx.beginPath();
-      ctx.moveTo(MID_X, MID_Y);
-      ctx.lineTo(imgX, imgY);
-      ctx.stroke();
-      ctx.restore();
-    }
-
-    ctx.restore();
-  }
-}
-
-export default function OptikMercek() {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-
-  const [f, setF] = useState(20);
-  const [doDist, setDoDist] = useState(35);
-  const [lensType, setLensType] = useState<'convex' | 'concave'>('convex');
-  
-  const ho = 25; // fixed height for better visual layout
-
-  // Mathematical outputs
-  let di = 0;
-  let isInfinity = false;
-  let isVirtual = false;
-
-  if (lensType === 'convex') {
-    if (Math.abs(doDist - f) < 0.1) {
-      isInfinity = true;
-    } else {
-      di = 1 / (1 / f - 1 / doDist);
-      isVirtual = di < 0;
-    }
-  } else {
-    di = 1 / (-1 / f - 1 / doDist);
-    isVirtual = true;
-  }
-
-  const magnification = isInfinity ? 0 : -di / doDist;
-
-  const draw = useCallback(() => {
+  const drawSystem = useCallback(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d')!;
-    drawOpticsDiagram(ctx, { f, doDist, ho, lensType });
-  }, [f, doDist, lensType]);
+
+    // Clear
+    ctx.fillStyle = '#050a1a';
+    ctx.fillRect(0, 0, CW, CH);
+
+    // Grid
+    ctx.strokeStyle = 'rgba(255,255,255,0.03)';
+    ctx.lineWidth = 1;
+    for (let x = 0; x < CW; x += 30) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, CH); ctx.stroke(); }
+    for (let y = 0; y < CH; y += 30) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(CW, y); ctx.stroke(); }
+
+    const scaleF = f * SCALE;
+    const scaleDo = doDist * SCALE;
+    const scaleHo = ho * SCALE;
+
+    // 1. Draw Optical Axis
+    ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(0, MID_Y);
+    ctx.lineTo(CW, MID_Y);
+    ctx.stroke();
+
+    // 2. Draw Lens
+    ctx.strokeStyle = '#06b6d4';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(MID_X, 40);
+    ctx.lineTo(MID_X, CH - 40);
+    ctx.stroke();
+
+    ctx.fillStyle = '#06b6d4';
+    if (lensType === 'convex') {
+      ctx.beginPath(); ctx.moveTo(MID_X - 8, 48); ctx.lineTo(MID_X, 40); ctx.lineTo(MID_X + 8, 48); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(MID_X - 8, CH - 48); ctx.lineTo(MID_X, CH - 40); ctx.lineTo(MID_X + 8, CH - 48); ctx.stroke();
+    } else {
+      ctx.beginPath(); ctx.moveTo(MID_X - 8, 40); ctx.lineTo(MID_X, 48); ctx.lineTo(MID_X + 8, 40); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(MID_X - 8, CH - 40); ctx.lineTo(MID_X, CH - 48); ctx.lineTo(MID_X + 8, CH - 40); ctx.stroke();
+    }
+
+    // 3. Focal points
+    const drawFocusPoint = (x: number, label: string) => {
+      ctx.fillStyle = '#f59e0b';
+      ctx.beginPath(); ctx.arc(x, MID_Y, 4, 0, Math.PI * 2); ctx.fill();
+      ctx.font = '10px monospace'; ctx.fillText(label, x - 6, MID_Y + 18);
+    };
+
+    drawFocusPoint(MID_X - scaleF, 'F1');
+    drawFocusPoint(MID_X - 2 * scaleF, '2F1');
+    drawFocusPoint(MID_X + scaleF, 'F2');
+    drawFocusPoint(MID_X + 2 * scaleF, '2F2');
+
+    // 4. Draw Object
+    const objX = MID_X - scaleDo;
+    const objY = MID_Y - scaleHo;
+
+    ctx.strokeStyle = '#a78bfa';
+    ctx.lineWidth = 4;
+    ctx.beginPath(); ctx.moveTo(objX, MID_Y); ctx.lineTo(objX, objY); ctx.stroke();
+    ctx.fillStyle = '#a78bfa';
+    ctx.beginPath(); ctx.moveTo(objX - 6, objY + 8); ctx.lineTo(objX, objY); ctx.lineTo(objX + 6, objY + 8); ctx.fill();
+    ctx.font = '11px monospace'; ctx.fillText('Nesne', objX - 18, objY - 10);
+
+    const scaleDi = di * SCALE;
+    const imgX = MID_X + scaleDi;
+    const scaleHi = hi * SCALE;
+    const imgY = MID_Y - scaleHi;
+
+    // 5. Draw Rays
+    ctx.lineWidth = 1.5;
+    
+    // Parallel Ray
+    ctx.strokeStyle = 'rgba(250,204,21,0.6)';
+    ctx.beginPath(); ctx.moveTo(objX, objY); ctx.lineTo(MID_X, objY); ctx.stroke();
+    
+    if (lensType === 'convex') {
+      if (!isInfinity) {
+        ctx.beginPath(); ctx.moveTo(MID_X, objY); ctx.lineTo(imgX, imgY); ctx.stroke();
+        // Extrapolate Ray 1 past image
+        const dx1 = imgX - MID_X;
+        const dy1 = imgY - objY;
+        ctx.beginPath(); ctx.moveTo(imgX, imgY); ctx.lineTo(imgX + dx1*2, imgY + dy1*2); ctx.stroke();
+      } else {
+        ctx.beginPath(); ctx.moveTo(MID_X, objY); ctx.lineTo(MID_X + scaleF, MID_Y); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(MID_X + scaleF, MID_Y); ctx.lineTo(MID_X + scaleF*3, MID_Y + objY); ctx.stroke();
+      }
+      
+      // Central Ray
+      ctx.strokeStyle = 'rgba(239,68,68,0.6)';
+      ctx.beginPath(); ctx.moveTo(objX, objY); ctx.lineTo(MID_X, MID_Y); ctx.stroke();
+      if (!isInfinity) {
+        ctx.beginPath(); ctx.moveTo(MID_X, MID_Y); ctx.lineTo(imgX, imgY); ctx.stroke();
+        const dx2 = imgX - MID_X;
+        const dy2 = imgY - MID_Y;
+        ctx.beginPath(); ctx.moveTo(imgX, imgY); ctx.lineTo(imgX + dx2*2, imgY + dy2*2); ctx.stroke();
+      } else {
+        const dx = MID_X - objX;
+        const dy = MID_Y - objY;
+        ctx.beginPath(); ctx.moveTo(MID_X, MID_Y); ctx.lineTo(MID_X + dx*2, MID_Y + dy*2); ctx.stroke();
+      }
+      
+      // Virtual extensions
+      if (isVirtual && !isInfinity) {
+         ctx.setLineDash([4, 4]);
+         ctx.strokeStyle = 'rgba(250,204,21,0.4)';
+         ctx.beginPath(); ctx.moveTo(MID_X, objY); ctx.lineTo(imgX, imgY); ctx.stroke();
+         ctx.strokeStyle = 'rgba(239,68,68,0.4)';
+         ctx.beginPath(); ctx.moveTo(MID_X, MID_Y); ctx.lineTo(imgX, imgY); ctx.stroke();
+         ctx.setLineDash([]);
+      }
+    } else {
+      // Concave Lens Rays
+      // Parallel ray diverges from F1
+      ctx.beginPath(); ctx.moveTo(MID_X, objY); ctx.lineTo(MID_X + scaleDo*2, objY - (objY - MID_Y)*(scaleDo*2)/scaleF); ctx.stroke();
+      
+      // Central Ray
+      ctx.strokeStyle = 'rgba(239,68,68,0.6)';
+      ctx.beginPath(); ctx.moveTo(objX, objY); ctx.lineTo(MID_X + scaleDo, MID_Y + (MID_Y - objY)); ctx.stroke();
+      
+      // Virtual extensions
+      ctx.setLineDash([4, 4]);
+      ctx.strokeStyle = 'rgba(250,204,21,0.4)';
+      ctx.beginPath(); ctx.moveTo(MID_X, objY); ctx.lineTo(imgX, imgY); ctx.stroke();
+      ctx.strokeStyle = 'rgba(239,68,68,0.4)';
+      ctx.beginPath(); ctx.moveTo(MID_X, MID_Y); ctx.lineTo(imgX, imgY); ctx.stroke();
+      ctx.setLineDash([]);
+    }
+
+    // 6. Draw Image
+    if (!isInfinity) {
+      ctx.save();
+      ctx.strokeStyle = isVirtual ? '#f43f5e' : '#10b981';
+      ctx.lineWidth = 3.5;
+      if (isVirtual) ctx.setLineDash([4, 4]);
+      ctx.beginPath(); ctx.moveTo(imgX, MID_Y); ctx.lineTo(imgX, imgY); ctx.stroke();
+
+      ctx.fillStyle = isVirtual ? '#f43f5e' : '#10b981';
+      ctx.beginPath();
+      const headDir = imgY < MID_Y ? 1 : -1;
+      ctx.moveTo(imgX - 6, imgY + 8 * headDir);
+      ctx.lineTo(imgX, imgY);
+      ctx.lineTo(imgX + 6, imgY + 8 * headDir);
+      ctx.fill();
+
+      ctx.font = '11px monospace';
+      ctx.fillText('Görüntü', imgX - 22, imgY + (headDir > 0 ? -10 : 20));
+      ctx.restore();
+    }
+  }, [f, doDist, ho, lensType, isInfinity, isVirtual, di, hi]);
 
   useEffect(() => {
-    draw();
-  }, [draw]);
-
-  const sliderStyle: React.CSSProperties = { width: '100%', accentColor: '#7c3aed', cursor: 'pointer' };
+    drawSystem();
+  }, [drawSystem]);
 
   return (
-    <div style={{ background: '#050a1a', color: '#f8fafc', fontFamily: 'var(--font-outfit, Outfit, sans-serif)', padding: '1.5rem', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.09)' }}>
-      <h2 style={{ fontWeight: 800, fontSize: '1.3rem', marginBottom: '0.25rem', background: 'linear-gradient(135deg, #f59e0b, #7c3aed)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
-        🔍 Mercek Optiği Simülasyonu
-      </h2>
-      <p style={{ color: '#64748b', fontSize: '0.82rem', marginBottom: '1.25rem' }}>İnce ve kalın kenarlı merceklerde ışın çizimi ve görüntü analizi</p>
+    <SimLayout
+      title="Optik Mercekler (İnce ve Kalın Kenarlı)"
+      children={
+        <div style={{ position: 'relative' }}>
+          <canvas ref={canvasRef} width={CW} height={CH} style={{ width: '100%', height: 'auto', borderRadius: '8px', border: '1px solid #27272a' }} />
+          <AstroTutorObserver message={aiMessage} type={aiType} />
+        </div>
+      }
+      controls={
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+           <div style={{ display: 'flex', justifyContent: 'center', gap: '10px' }}>
+              <SimButton label="İnce Kenarlı (Yakınsak)" variant={lensType === 'convex' ? 'primary' : 'secondary'} onClick={() => setLensType('convex')} />
+              <SimButton label="Kalın Kenarlı (Iraksak)" variant={lensType === 'concave' ? 'primary' : 'secondary'} onClick={() => setLensType('concave')} />
+           </div>
+           
+           <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1rem' }}>
+             <div style={{ background: '#18181b', padding: '15px', borderRadius: '8px', borderTop: '3px solid #06b6d4' }}>
+                <SimSlider label="Odak Uzaklığı (f)" min={10} max={60} step={1} value={f} onChange={setF} />
+                <SimSlider label="Cisim Uzaklığı (do)" min={5} max={80} step={1} value={doDist} onChange={setDoDist} />
+                <SimSlider label="Cisim Boyu (ho)" min={5} max={40} step={1} value={ho} onChange={setHo} />
+             </div>
+           </div>
 
-      <div style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap' as const }}>
-        {/* Canvas */}
-        <div style={{ flex: '1 1 400px' }}>
-          <canvas ref={canvasRef} width={CW} height={CH}
-            style={{ borderRadius: '14px', border: '1px solid rgba(255,255,255,0.08)', maxWidth: '100%', display: 'block' }} />
-          
-          {/* Ray legends */}
-          <div style={{ display: 'flex', gap: '1.5rem', justifyContent: 'center', marginTop: '0.75rem', fontSize: '0.78rem', color: '#94a3b8' }}>
-            <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-              <span style={{ width: 10, height: 10, background: '#ef4444', borderRadius: '50%' }} /> Paralel Işın
-            </span>
-            <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-              <span style={{ width: 10, height: 10, background: '#10b981', borderRadius: '50%' }} /> Merkez Işın
-            </span>
-            <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-              <span style={{ width: 10, height: 10, background: '#3b82f6', borderRadius: '50%' }} /> Odak Işın
-            </span>
+           <div style={{ background: '#18181b', padding: '15px', borderRadius: '8px', border: '1px solid #27272a', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+             <div><span style={{ fontSize: '12px', color: '#a1a1aa' }}>Görüntü Uzaklığı (di):</span> <br/>
+                <span style={{ color: isInfinity ? '#f59e0b' : (isVirtual ? '#f43f5e' : '#10b981'), fontWeight: 'bold' }}>
+                  {isInfinity ? 'Sonsuz' : `${di.toFixed(1)} cm`}
+                </span>
+             </div>
+             <div><span style={{ fontSize: '12px', color: '#a1a1aa' }}>Büyütme (m):</span> <br/>
+                <span style={{ color: '#3b82f6', fontWeight: 'bold' }}>
+                  {isInfinity ? '-' : `${magnification.toFixed(2)}x`}
+                </span>
+             </div>
+             <div><span style={{ fontSize: '12px', color: '#a1a1aa' }}>Görüntü Boyu (hi):</span> <br/>
+                <span style={{ color: '#8b5cf6', fontWeight: 'bold' }}>
+                  {isInfinity ? '-' : `${hi.toFixed(1)} cm`}
+                </span>
+             </div>
+             <div><span style={{ fontSize: '12px', color: '#a1a1aa' }}>Görüntü Türü:</span> <br/>
+                <span style={{ color: '#f8fafc', fontWeight: 'bold' }}>
+                  {isInfinity ? 'Yok' : (isVirtual ? 'Sanal (Zahiri)' : 'Gerçek')}
+                </span>
+             </div>
+           </div>
+        </div>
+      }
+      charts={
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', height: '100%' }}>
+          <div style={{ display: 'flex', gap: '0.5rem', background: '#18181b', padding: '4px', borderRadius: '8px' }}>
+            <button style={{ flex: 1, padding: '8px', background: '#27272a', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>Büyütme vs Cisim Uzaklığı</button>
+          </div>
+          <div style={{ flex: 1, minHeight: '300px' }}>
+            <ResponsiveContainer width="100%" height="100%">
+               <LineChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#27272a" />
+                  <XAxis dataKey="doDist" stroke="#a1a1aa" fontSize={12} label={{ value: 'do (cm)', position: 'insideBottomRight', fill: '#a1a1aa' }} />
+                  <YAxis stroke="#a1a1aa" fontSize={12} label={{ value: 'Büyütme', angle: -90, position: 'insideLeft', fill: '#a1a1aa' }} />
+                  <Tooltip contentStyle={{ backgroundColor: '#18181b', borderColor: '#27272a', color: '#fff' }} itemStyle={{ color: '#fff' }} />
+                  <ReferenceLine y={0} stroke="#4b5563" />
+                  <ReferenceLine x={f} stroke="#f59e0b" strokeDasharray="3 3" label={{ position: 'top', value: 'F', fill: '#f59e0b' }} />
+                  {lensType === 'convex' && <ReferenceLine x={2*f} stroke="#f59e0b" strokeDasharray="3 3" label={{ position: 'top', value: '2F', fill: '#f59e0b' }} />}
+                  <Line type="monotone" dataKey="magnification" name="Büyütme (m)" stroke="#3b82f6" strokeWidth={2} dot={false} isAnimationActive={false} />
+                </LineChart>
+            </ResponsiveContainer>
           </div>
         </div>
-
-        {/* Controls */}
-        <div style={{ flex: '1 1 200px', display: 'flex', flexDirection: 'column' as const, gap: '1rem' }}>
-          {/* Lens Type Selection */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.4rem', background: 'rgba(255,255,255,0.04)', borderRadius: '10px', padding: '0.25rem' }}>
-            {(['convex', 'concave'] as const).map((type) => (
-              <button
-                key={type}
-                onClick={() => {
-                  setLensType(type);
-                  // Safeguard object distance for concave
-                  if (type === 'concave') {
-                    setDoDist(Math.max(15, doDist));
-                  }
-                }}
-                style={{
-                  padding: '0.5rem', borderRadius: '7px', border: 'none', cursor: 'pointer',
-                  fontSize: '0.8rem', fontWeight: 700, transition: 'all 0.2s',
-                  background: lensType === type ? 'linear-gradient(135deg, #7c3aed, #06b6d4)' : 'transparent',
-                  color: lensType === type ? 'white' : '#64748b',
-                }}
-              >
-                {type === 'convex' ? '🔍 Yakınsak (İnce)' : '🔍 Iraksak (Kalın)'}
-              </button>
-            ))}
-          </div>
-
-          {/* Sliders */}
-          <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '14px', padding: '1.25rem' }}>
-            <div style={{ fontWeight: 700, fontSize: '0.9rem', marginBottom: '1rem', color: '#a78bfa' }}>⚙️ Değerler</div>
-
-            <div style={{ marginBottom: '0.875rem' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.3rem', fontSize: '0.8rem' }}>
-                <span style={{ color: '#94a3b8' }}>Odak Uzaklığı (f)</span>
-                <span style={{ fontWeight: 700, color: '#f59e0b', fontFamily: 'monospace' }}>{f} cm</span>
-              </div>
-              <input type="range" min={10} max={45} step={1} value={f} onChange={(e) => setF(+e.target.value)} style={sliderStyle} />
-            </div>
-
-            <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.3rem', fontSize: '0.8rem' }}>
-                <span style={{ color: '#94a3b8' }}>Nesne Uzaklığı (do)</span>
-                <span style={{ fontWeight: 700, color: '#a78bfa', fontFamily: 'monospace' }}>{doDist} cm</span>
-              </div>
-              <input type="range" min={5} max={90} step={1} value={doDist} onChange={(e) => setDoDist(+e.target.value)} style={sliderStyle} />
-            </div>
-          </div>
-
-          {/* Math Results */}
-          <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '14px', padding: '1.25rem' }}>
-            <div style={{ fontWeight: 700, fontSize: '0.9rem', marginBottom: '1rem', color: '#67e8f9' }}>📊 Optik Sonuçlar</div>
-            {[
-              { label: 'Odak Türü', value: lensType === 'convex' ? 'Gerçek (+f)' : 'Sanal (-f)', color: '#f59e0b' },
-              { label: 'Görüntü Uzaklığı (di)', value: isInfinity ? '∞ (Sonsuzda)' : `${di.toFixed(1)} cm`, color: isVirtual ? '#f43f5e' : '#10b981' },
-              { label: 'Görüntü Tipi', value: isInfinity ? '—' : isVirtual ? 'Sanal (Düz)' : 'Gerçek (Ters)', color: isVirtual ? '#f43f5e' : '#10b981' },
-              { label: 'Büyütme oranı (m)', value: isInfinity ? '—' : `${magnification.toFixed(2)}x`, color: '#a78bfa' },
-            ].map((item) => (
-              <div key={item.label} style={{ display: 'flex', justifyContent: 'space-between', padding: '0.4rem 0', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
-                <span style={{ fontSize: '0.78rem', color: '#64748b' }}>{item.label}</span>
-                <span style={{ fontWeight: 700, color: item.color, fontFamily: 'monospace', fontSize: '0.85rem' }}>{item.value}</span>
-              </div>
-            ))}
-          </div>
-
-          {/* Physics formula box */}
-          <div style={{ background: 'rgba(124,58,237,0.06)', border: '1px solid rgba(124,58,237,0.2)', borderRadius: '14px', padding: '1.25rem' }}>
-            <div style={{ fontWeight: 700, fontSize: '0.9rem', marginBottom: '0.5rem', color: '#a78bfa' }}>📐 İnce Kenarlı Mercek Formülü</div>
-            <div style={{ fontFamily: 'monospace', fontSize: '0.85rem', color: '#e2e8f0', padding: '0.35rem', background: 'rgba(255,255,255,0.04)', borderRadius: '5px', textAlign: 'center', marginBottom: '0.5rem' }}>
-              1/f = 1/do + 1/di
-            </div>
-            <div style={{ fontSize: '0.75rem', color: '#64748b', lineHeight: 1.4 }}>
-              * di &gt; 0 ise görüntü gerçektir ve lensin diğer tarafında oluşur.<br />
-              * di &lt; 0 ise görüntü sanaldır ve cisimle aynı tarafta oluşur.
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+      }
+    />
   );
 }

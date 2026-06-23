@@ -1,260 +1,214 @@
 'use client';
 
-import React, { useRef, useEffect, useState, useCallback } from 'react';
-import styles from './OhmKanunu.module.css';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { SimLayout, SimSlider, SimButton, AstroTutorObserver } from './ui';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ReferenceLine } from 'recharts';
 
-interface OhmKanunuParams {
-  voltage: number;
-  resistance: number;
-}
+const CW = 800;
+const CH = 380;
 
-interface OhmKanunuProps {
-  initialParams?: Partial<OhmKanunuParams>;
-  isLocked?: boolean;
-  onParamsChange?: (params: OhmKanunuParams) => void;
-}
-
-const CANVAS_W = 600;
-const CANVAS_H = 400;
-
-export default function OhmKanunu({
-  initialParams,
-  isLocked = false,
-  onParamsChange
-}: OhmKanunuProps) {
+export default function OhmKanunu() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animRef = useRef<number>(0);
-
-  // States
-  const [voltage, setVoltage] = useState(initialParams?.voltage ?? 12);
-  const [resistance, setResistance] = useState(initialParams?.resistance ?? 10);
   
+  const [voltage, setVoltage] = useState(12);
+  const [resistance, setResistance] = useState(10);
+  const [running, setRunning] = useState(true);
+
+  const [aiMessage, setAiMessage] = useState<string | null>(null);
+  const [aiType, setAiType] = useState<'info'|'warning'|'success'>('info');
+  const [chartData, setChartData] = useState<{v: number, i: number}[]>([]);
+
   const current = voltage / resistance;
-
-  // Notify parent on change
+  
   useEffect(() => {
-    if (onParamsChange) {
-      onParamsChange({ voltage, resistance });
+    // Check states for AI
+    if (voltage === 0) {
+      setAiMessage('Gerilim (Voltaj) 0 olduğu için devreden akım geçemiyor. Elektronları itecek kuvvet yok.');
+      setAiType('warning');
+    } else if (resistance < 2) {
+      setAiMessage('Dikkat! Direnç çok düşük, akım çok yüksek. Gerçek bir devrede bu kısa devreye ve ısınmaya neden olabilir.');
+      setAiType('warning');
+    } else {
+      setAiMessage('Ohm Kanunu (V = I · R): Gerilim arttıkça akım artar, direnç arttıkça akım azalır. Grafikteki doğrunun eğimi (1/R) direncin tersini verir.');
+      setAiType('info');
     }
-  }, [voltage, resistance, onParamsChange]);
 
-  // Animation state
-  const stateRef = useRef({
-    offset: 0,
-    lastTime: 0
-  });
+    // Chart data (V vs I)
+    const data = [];
+    for (let v = 0; v <= 30; v += 2) {
+      data.push({ v, i: Number((v / resistance).toFixed(2)) });
+    }
+    setChartData(data);
+  }, [voltage, resistance]);
+
+  const offsetRef = useRef(0);
 
   const getPathCoord = (d: number): [number, number] => {
-    // Total path length = 1200
     d = ((d % 1200) + 1200) % 1200;
-    if (d < 400) return [100 + d, 100];
-    if (d < 600) return [500, 100 + (d - 400)];
-    if (d < 1000) return [500 - (d - 600), 300];
-    return [100, 300 - (d - 1000)];
+    if (d < 400) return [200 + d, 100];
+    if (d < 600) return [600, 100 + (d - 400)];
+    if (d < 1000) return [600 - (d - 600), 300];
+    return [200, 300 - (d - 1000)];
   };
 
-  const drawCircuit = useCallback((ctx: CanvasRenderingContext2D, v: number, r: number, i: number, offset: number) => {
-    ctx.clearRect(0, 0, CANVAS_W, CANVAS_H);
+  const drawSystem = useCallback(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d')!;
 
-    // Grid background
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.03)';
+    ctx.fillStyle = '#050a1a';
+    ctx.fillRect(0, 0, CW, CH);
+
+    ctx.strokeStyle = 'rgba(255,255,255,0.03)';
     ctx.lineWidth = 1;
-    for (let x = 0; x < CANVAS_W; x += 20) {
-      ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, CANVAS_H); ctx.stroke();
-    }
-    for (let y = 0; y < CANVAS_H; y += 20) {
-      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(CANVAS_W, y); ctx.stroke();
-    }
+    for (let x = 0; x < CW; x += 20) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, CH); ctx.stroke(); }
+    for (let y = 0; y < CH; y += 20) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(CW, y); ctx.stroke(); }
 
-    // Wires
     ctx.strokeStyle = '#52525b';
     ctx.lineWidth = 4;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
 
     // Top
-    ctx.beginPath(); ctx.moveTo(100, 100); ctx.lineTo(500, 100); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(200, 100); ctx.lineTo(600, 100); ctx.stroke();
     // Bottom
-    ctx.beginPath(); ctx.moveTo(100, 300); ctx.lineTo(500, 300); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(200, 300); ctx.lineTo(600, 300); ctx.stroke();
     // Left (Battery)
-    ctx.beginPath(); ctx.moveTo(100, 100); ctx.lineTo(100, 190); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(100, 210); ctx.lineTo(100, 300); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(200, 100); ctx.lineTo(200, 190); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(200, 210); ctx.lineTo(200, 300); ctx.stroke();
     // Right (Resistor)
-    ctx.beginPath(); ctx.moveTo(500, 100); ctx.lineTo(500, 160); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(500, 240); ctx.lineTo(500, 300); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(600, 100); ctx.lineTo(600, 160); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(600, 240); ctx.lineTo(600, 300); ctx.stroke();
 
     // Battery Symbol
-    ctx.strokeStyle = '#3b82f6';
+    ctx.strokeStyle = '#10b981';
     ctx.lineWidth = 3;
-    // Positive terminal (long)
-    ctx.beginPath(); ctx.moveTo(75, 190); ctx.lineTo(125, 190); ctx.stroke();
-    // Negative terminal (short)
+    ctx.beginPath(); ctx.moveTo(175, 190); ctx.lineTo(225, 190); ctx.stroke();
     ctx.strokeStyle = '#f43f5e';
     ctx.lineWidth = 5;
-    ctx.beginPath(); ctx.moveTo(85, 210); ctx.lineTo(115, 210); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(185, 210); ctx.lineTo(215, 210); ctx.stroke();
     
-    // Battery Label
     ctx.fillStyle = '#f4f4f5';
     ctx.font = '14px monospace';
     ctx.textAlign = 'right';
-    ctx.fillText(`${v.toFixed(1)} V`, 65, 205);
-    ctx.fillStyle = '#3b82f6';
-    ctx.fillText('+', 95, 180);
-    ctx.fillStyle = '#f43f5e';
-    ctx.fillText('-', 95, 230);
+    ctx.fillText(`${voltage.toFixed(1)} V`, 165, 205);
+    ctx.fillStyle = '#10b981'; ctx.fillText('+', 195, 180);
+    ctx.fillStyle = '#f43f5e'; ctx.fillText('-', 195, 230);
 
-    // Resistor Symbol (Zigzag)
+    // Resistor Symbol
     ctx.strokeStyle = '#f59e0b';
     ctx.lineWidth = 3;
     ctx.beginPath();
-    ctx.moveTo(500, 160);
-    ctx.lineTo(515, 170);
-    ctx.lineTo(485, 183);
-    ctx.lineTo(515, 196);
-    ctx.lineTo(485, 210);
-    ctx.lineTo(515, 223);
-    ctx.lineTo(500, 240);
+    ctx.moveTo(600, 160);
+    ctx.lineTo(615, 170); ctx.lineTo(585, 183); ctx.lineTo(615, 196);
+    ctx.lineTo(585, 210); ctx.lineTo(615, 223); ctx.lineTo(600, 240);
     ctx.stroke();
 
-    // Resistor Label
     ctx.fillStyle = '#f4f4f5';
     ctx.textAlign = 'left';
-    ctx.fillText(`${r.toFixed(1)} Ω`, 535, 205);
+    ctx.fillText(`${resistance.toFixed(1)} Ω`, 635, 205);
 
-    // Ammeter Symbol (Top wire)
+    // Ammeter
     ctx.fillStyle = '#18181b';
-    ctx.strokeStyle = '#10b981';
+    ctx.strokeStyle = '#38bdf8';
     ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.arc(300, 100, 20, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-    ctx.fillStyle = '#10b981';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.font = 'bold 16px Inter, sans-serif';
-    ctx.fillText('A', 300, 100);
-    ctx.font = '12px monospace';
-    ctx.fillText(`${i.toFixed(2)} A`, 300, 70);
+    ctx.beginPath(); ctx.arc(400, 100, 25, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = '#38bdf8';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.font = 'bold 20px Inter, sans-serif'; ctx.fillText('A', 400, 100);
+    ctx.font = '12px monospace'; ctx.fillText(`${current.toFixed(2)} A`, 400, 60);
 
-    // Charge Carriers (Conventional Current)
-    const numCarriers = 12;
+    // Electrons
+    if (running) {
+      offsetRef.current += current * 2;
+    }
+    const numCarriers = 15;
     const spacing = 1200 / numCarriers;
     
+    ctx.fillStyle = '#38bdf8';
+    ctx.shadowBlur = 6;
+    ctx.shadowColor = '#38bdf8';
     for (let j = 0; j < numCarriers; j++) {
-      const d = offset + j * spacing;
+      const d = offsetRef.current + j * spacing;
       const [cx, cy] = getPathCoord(d);
       
-      // Don't draw if inside battery or resistor
-      const isInsideBattery = cx === 100 && cy > 185 && cy < 215;
-      const isInsideResistor = cx === 500 && cy > 155 && cy < 245;
-      const isInsideAmmeter = cy === 100 && cx > 280 && cx < 320;
+      const isInsideBattery = cx === 200 && cy > 185 && cy < 215;
+      const isInsideResistor = cx === 600 && cy > 155 && cy < 245;
+      const isInsideAmmeter = cy === 100 && cx > 375 && cx < 425;
 
       if (!isInsideBattery && !isInsideResistor && !isInsideAmmeter) {
-        ctx.fillStyle = '#fcd34d';
-        ctx.beginPath();
-        ctx.arc(cx, cy, 4, 0, Math.PI * 2);
-        ctx.fill();
-        
-        // Glow
-        ctx.fillStyle = 'rgba(252, 211, 77, 0.4)';
-        ctx.beginPath();
-        ctx.arc(cx, cy, 8, 0, Math.PI * 2);
-        ctx.fill();
+        ctx.beginPath(); ctx.arc(cx, cy, 4, 0, Math.PI * 2); ctx.fill();
       }
     }
-
-  }, []);
-
-  const animate = useCallback((timestamp: number) => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d')!;
-
-    const dt = timestamp - stateRef.current.lastTime;
-    stateRef.current.lastTime = timestamp;
-
-    if (dt < 100) { // ignore large jumps
-      // Speed proportional to current
-      const speed = current * 2; 
-      stateRef.current.offset = (stateRef.current.offset + speed * (dt / 16)) % 1200;
-    }
-
-    drawCircuit(ctx, voltage, resistance, current, stateRef.current.offset);
-    animRef.current = requestAnimationFrame(animate);
-  }, [voltage, resistance, current, drawCircuit]);
+    ctx.shadowBlur = 0;
+  }, [voltage, resistance, current, running]);
 
   useEffect(() => {
-    stateRef.current.lastTime = performance.now();
-    animRef.current = requestAnimationFrame(animate);
-    return () => cancelAnimationFrame(animRef.current);
-  }, [animate]);
+    let animId: number;
+    const renderLoop = () => {
+      drawSystem();
+      animId = requestAnimationFrame(renderLoop);
+    };
+    renderLoop();
+    return () => cancelAnimationFrame(animId);
+  }, [drawSystem]);
 
   return (
-    <div className={styles.container}>
-      {isLocked && (
-        <div className={styles.lockedMessage}>
-          <span>🔒</span>
-          Simülasyon şu an kilitli. Sadece izleme modundasınız.
+    <SimLayout
+      title="Ohm Kanunu (V = I · R)"
+      children={
+        <div style={{ position: 'relative' }}>
+          <canvas ref={canvasRef} width={CW} height={CH} style={{ width: '100%', height: 'auto', borderRadius: '8px', border: '1px solid #27272a' }} />
+          <AstroTutorObserver message={aiMessage} type={aiType} />
         </div>
-      )}
+      }
+      controls={
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+           <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1rem' }}>
+             <div style={{ background: '#18181b', padding: '15px', borderRadius: '8px', borderTop: '3px solid #10b981' }}>
+                <SimSlider label="Gerilim (V)" min={0} max={30} step={1} value={voltage} onChange={setVoltage} />
+             </div>
+             <div style={{ background: '#18181b', padding: '15px', borderRadius: '8px', borderTop: '3px solid #f59e0b' }}>
+                <SimSlider label="Direnç (R) [Ω]" min={1} max={50} step={1} value={resistance} onChange={setResistance} />
+             </div>
+           </div>
 
-      <div className={styles.canvasContainer}>
-        <canvas
-          ref={canvasRef}
-          width={CANVAS_W}
-          height={CANVAS_H}
-          className={styles.canvas}
-        />
-      </div>
+           <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', marginTop: '1rem', alignItems: 'center' }}>
+              <SimButton label={running ? 'Duraklat' : 'Başlat'} variant="primary" onClick={() => setRunning(!running)} />
+           </div>
 
-      <div className={styles.statsPanel}>
-        <div className={styles.statBox}>
-          <span className={styles.statLabel}>Gerilim (V)</span>
-          <span className={`${styles.statValue} ${styles.voltage}`}>{voltage.toFixed(1)} V</span>
+           <div style={{ background: '#18181b', padding: '15px', borderRadius: '8px', border: '1px solid #27272a', display: 'flex', justifyContent: 'space-around', alignItems: 'center' }}>
+             <div style={{ textAlign: 'center' }}>
+               <span style={{ fontSize: '12px', color: '#a1a1aa' }}>Devre Akımı (I)</span><br/>
+               <span style={{ color: '#38bdf8', fontSize: '24px', fontWeight: 'bold' }}>{current.toFixed(2)} A</span>
+             </div>
+             <div style={{ textAlign: 'center' }}>
+               <span style={{ fontSize: '12px', color: '#a1a1aa' }}>Ohm Kanunu</span><br/>
+               <span style={{ color: '#6366f1', fontSize: '16px', fontWeight: 'bold', fontFamily: 'monospace' }}>I = V / R</span>
+             </div>
+           </div>
         </div>
-        <div className={styles.statBox}>
-          <span className={styles.statLabel}>Direnç (R)</span>
-          <span className={`${styles.statValue} ${styles.resistance}`}>{resistance.toFixed(1)} Ω</span>
-        </div>
-        <div className={styles.statBox}>
-          <span className={styles.statLabel}>Akım (I)</span>
-          <span className={`${styles.statValue} ${styles.current}`}>{current.toFixed(2)} A</span>
-        </div>
-      </div>
-
-      <div className={styles.controls}>
-        <div className={styles.controlGroup}>
-          <div className={styles.controlHeader}>
-            <span className={styles.label}>Gerilim (Pil)</span>
-            <span className={styles.value}>{voltage.toFixed(1)} V</span>
+      }
+      charts={
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', height: '100%' }}>
+          <div style={{ display: 'flex', gap: '0.5rem', background: '#18181b', padding: '4px', borderRadius: '8px' }}>
+            <button style={{ flex: 1, padding: '8px', background: '#27272a', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>Akım vs Gerilim Grafiği</button>
           </div>
-          <input
-            type="range"
-            className={styles.slider}
-            min="0"
-            max="24"
-            step="0.5"
-            value={voltage}
-            onChange={(e) => setVoltage(parseFloat(e.target.value))}
-            disabled={isLocked}
-          />
-        </div>
-
-        <div className={styles.controlGroup}>
-          <div className={styles.controlHeader}>
-            <span className={styles.label}>Direnç</span>
-            <span className={styles.value}>{resistance.toFixed(1)} Ω</span>
+          <div style={{ flex: 1, minHeight: '300px' }}>
+            <ResponsiveContainer width="100%" height="100%">
+               <LineChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#27272a" />
+                  <XAxis dataKey="v" stroke="#a1a1aa" fontSize={12} label={{ value: 'Gerilim (V)', position: 'insideBottomRight', fill: '#a1a1aa' }} />
+                  <YAxis stroke="#a1a1aa" fontSize={12} label={{ value: 'Akım (A)', angle: -90, position: 'insideLeft', fill: '#a1a1aa' }} />
+                  <Tooltip contentStyle={{ backgroundColor: '#18181b', borderColor: '#27272a', color: '#fff' }} itemStyle={{ color: '#fff' }} />
+                  <ReferenceLine x={voltage} stroke="#f43f5e" strokeDasharray="3 3" label={{ position: 'top', value: 'Şu anki V', fill: '#f43f5e' }} />
+                  <Line type="monotone" dataKey="i" name="Akım (A)" stroke="#38bdf8" strokeWidth={3} dot={false} isAnimationActive={false} />
+                </LineChart>
+            </ResponsiveContainer>
           </div>
-          <input
-            type="range"
-            className={styles.slider}
-            min="1"
-            max="100"
-            step="1"
-            value={resistance}
-            onChange={(e) => setResistance(parseFloat(e.target.value))}
-            disabled={isLocked}
-          />
         </div>
-      </div>
-    </div>
+      }
+    />
   );
 }
