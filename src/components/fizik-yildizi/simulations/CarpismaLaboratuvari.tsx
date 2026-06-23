@@ -231,12 +231,12 @@ export default function CarpismaLaboratuvari() {
              </div>
            </div>
            
-           <div style={{ display: 'flex', justifyContent: 'center', gap: '10px' }}>
+           <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '10px' }}>
               <SimButton label="Esnek (Enerji Korunur)" variant={isElastic ? 'primary' : 'secondary'} onClick={() => {setIsElastic(true); handleReset();}} />
               <SimButton label="Kenetlenme (Esnek Olmayan)" variant={!isElastic ? 'primary' : 'secondary'} onClick={() => {setIsElastic(false); handleReset();}} />
            </div>
            
-           <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', marginTop: '1rem', alignItems: 'center' }}>
+           <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '1rem', marginTop: '1rem', alignItems: 'center' }}>
               <SimButton label={running ? 'Duraklat' : 'Başlat'} variant="primary" onClick={handleStart} />
               <SimTimeController disabled={false} timeScale={timeScale} setTimeScale={setTimeScale} onStepForward={handleStepForward} />
               <SimButton label="Sıfırla" variant="danger" onClick={handleReset} />

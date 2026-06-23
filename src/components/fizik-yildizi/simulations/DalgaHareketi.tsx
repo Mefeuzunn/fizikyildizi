@@ -258,17 +258,17 @@ export default function DalgaHareketi() {
              </div>
            </div>
            
-           <div style={{ display: 'flex', justifyContent: 'center', gap: '10px' }}>
+           <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '10px' }}>
               <SimButton label="Enine Dalga" variant={waveType === 'transverse' ? 'primary' : 'secondary'} onClick={() => setWaveType('transverse')} />
               <SimButton label="Boyuna Dalga" variant={waveType === 'longitudinal' ? 'primary' : 'secondary'} onClick={() => setWaveType('longitudinal')} />
            </div>
 
-           <div style={{ display: 'flex', justifyContent: 'center', gap: '10px' }}>
+           <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '10px' }}>
               <SimButton label={showReflection ? "Yansıma: Açık" : "Yansıma: Kapalı"} variant={showReflection ? 'primary' : 'secondary'} onClick={() => setShowReflection(!showReflection)} />
               <SimButton label={dopplerMode ? "Doppler: Açık" : "Doppler: Kapalı"} variant={dopplerMode ? 'primary' : 'secondary'} onClick={() => setDopplerMode(!dopplerMode)} />
            </div>
            
-           <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', marginTop: '1rem', alignItems: 'center' }}>
+           <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '1rem', marginTop: '1rem', alignItems: 'center' }}>
               <SimButton label={running ? 'Duraklat' : 'Başlat'} variant="primary" onClick={handleStart} />
               <SimTimeController disabled={false} timeScale={timeScale} setTimeScale={setTimeScale} onStepForward={handleStepForward} />
            </div>

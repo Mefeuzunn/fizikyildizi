@@ -174,7 +174,7 @@ export default function OhmKanunu() {
              </div>
            </div>
 
-           <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', marginTop: '1rem', alignItems: 'center' }}>
+           <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '1rem', marginTop: '1rem', alignItems: 'center' }}>
               <SimButton label={running ? 'Duraklat' : 'Başlat'} variant="primary" onClick={() => setRunning(!running)} />
            </div>
 

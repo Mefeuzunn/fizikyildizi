@@ -225,7 +225,7 @@ export default function MekanikEnerjiKorunumu() {
              </div>
            </div>
            
-           <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', marginTop: '1rem', alignItems: 'center' }}>
+           <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '1rem', marginTop: '1rem', alignItems: 'center' }}>
               <SimButton label={running ? 'Duraklat' : 'Başlat'} variant="primary" onClick={handleStart} />
               <SimTimeController disabled={false} timeScale={timeScale} setTimeScale={setTimeScale} onStepForward={handleStepForward} />
               <SimButton label="Sıfırla" variant="danger" onClick={handleReset} />

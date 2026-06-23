@@ -291,7 +291,7 @@ export default function ElektrikDevresi() {
       }
       controls={
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-           <div style={{ display: 'flex', justifyContent: 'center', gap: '10px' }}>
+           <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '10px' }}>
               {(['Seri', 'Paralel', 'Karma'] as CircuitType[]).map(t => (
                 <SimButton key={t} label={`${t} Devre`} variant={circuitType === t ? 'primary' : 'secondary'} onClick={() => setCircuitType(t)} />
               ))}

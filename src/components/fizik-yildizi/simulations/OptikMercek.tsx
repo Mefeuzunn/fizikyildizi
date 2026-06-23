@@ -258,7 +258,7 @@ export default function OptikMercek() {
       }
       controls={
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-           <div style={{ display: 'flex', justifyContent: 'center', gap: '10px' }}>
+           <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '10px' }}>
               <SimButton label="İnce Kenarlı (Yakınsak)" variant={lensType === 'convex' ? 'primary' : 'secondary'} onClick={() => setLensType('convex')} />
               <SimButton label="Kalın Kenarlı (Iraksak)" variant={lensType === 'concave' ? 'primary' : 'secondary'} onClick={() => setLensType('concave')} />
            </div>
