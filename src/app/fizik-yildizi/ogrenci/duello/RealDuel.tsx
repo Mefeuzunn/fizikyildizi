@@ -1,5 +1,5 @@
 'use client';
-
+import { apiFetch } from '@/lib/fizik-yildizi/apiFetch';
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { updateXp } from '@/lib/fizik-yildizi/db';
@@ -62,7 +62,7 @@ export default function RealDuel({ onExit, onAutoBot }: { onExit: () => void, on
 
   const joinDuel = async (k: any) => {
     try {
-      const res = await fetch('/api/fizik-yildizi', {
+      const res = await apiFetch('/api/fizik-yildizi', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -87,7 +87,7 @@ export default function RealDuel({ onExit, onAutoBot }: { onExit: () => void, on
   const startPolling = (duelId: number, userId: number) => {
     pollInterval.current = setInterval(async () => {
       try {
-        const res = await fetch('/api/fizik-yildizi', {
+        const res = await apiFetch('/api/fizik-yildizi', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ action: 'pollDuel', data: { duelId, userId } })
@@ -120,7 +120,7 @@ export default function RealDuel({ onExit, onAutoBot }: { onExit: () => void, on
 
   const handleTimeout = async () => {
     if (duel) {
-      await fetch('/api/fizik-yildizi', {
+      await apiFetch('/api/fizik-yildizi', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'cancelDuel', data: { duelId: duel.id } })
@@ -132,7 +132,7 @@ export default function RealDuel({ onExit, onAutoBot }: { onExit: () => void, on
 
   const cancelMatchmaking = async () => {
     if (duel) {
-      await fetch('/api/fizik-yildizi', {
+      await apiFetch('/api/fizik-yildizi', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'cancelDuel', data: { duelId: duel.id } })
@@ -163,7 +163,7 @@ export default function RealDuel({ onExit, onAutoBot }: { onExit: () => void, on
   const handleTimeUp = async () => {
     // Both players might call this, backend should be idempotent
     if (duel) {
-      await fetch('/api/fizik-yildizi', {
+      await apiFetch('/api/fizik-yildizi', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'advanceDuelQuestion', data: { duelId: duel.id } })
@@ -174,7 +174,7 @@ export default function RealDuel({ onExit, onAutoBot }: { onExit: () => void, on
   const handlePlayerSelect = async (choice: string) => {
     if (playerSelected || timeLeft <= 0 || !duel || !kullanici) return;
     setPlayerSelected(choice);
-    await fetch('/api/fizik-yildizi', {
+    await apiFetch('/api/fizik-yildizi', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({

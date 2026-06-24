@@ -1,5 +1,5 @@
 'use client';
-
+import { apiFetch } from '@/lib/fizik-yildizi/apiFetch';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { getKullanicilar, saveKullanici, kullaniciSil, Kullanici } from '@/lib/fizik-yildizi/db';
@@ -142,7 +142,7 @@ export default function OgrenciProfilPage() {
     };
 
     try {
-      const res = await fetch('/api/fizik-yildizi', {
+      const res = await apiFetch('/api/fizik-yildizi', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'saveKullanici', data: updated }),
@@ -172,7 +172,7 @@ export default function OgrenciProfilPage() {
     await new Promise((r) => setTimeout(r, 700));
 
     try {
-      const res = await fetch('/api/fizik-yildizi', {
+      const res = await apiFetch('/api/fizik-yildizi', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

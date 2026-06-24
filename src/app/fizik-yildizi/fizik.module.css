@@ -400,16 +400,28 @@
 
 .mobileMenu {
   position: fixed;
-  top: 70px;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 280px;
+  background: rgba(9, 9, 11, 0.98);
+  backdrop-filter: blur(30px);
+  -webkit-backdrop-filter: blur(30px);
+  border-right: 1px solid #27272a;
+  padding: 80px 1rem 1rem 1rem;
+  z-index: 99;
+  box-shadow: 10px 0 30px rgba(0,0,0,0.5);
+  overflow-y: auto;
+}
+
+.mobileMenuOverlay {
+  position: fixed;
+  top: 0;
   left: 0;
   right: 0;
-  background: rgba(9, 9, 11, 0.97);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border-bottom: 1px solid #27272a;
-  padding: 1rem;
-  animation: fadeInDown 0.18s ease;
-  z-index: 99;
+  bottom: 0;
+  background: rgba(0,0,0,0.6);
+  z-index: 98;
 }
 
 .mobileNavLink {

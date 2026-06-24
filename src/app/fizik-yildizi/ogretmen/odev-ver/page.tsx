@@ -1,5 +1,5 @@
 'use client';
-
+import { apiFetch } from '@/lib/fizik-yildizi/apiFetch';
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import styles from '@/app/fizik-yildizi/fizik.module.css';
@@ -59,7 +59,7 @@ export default function OdevVerPage() {
     };
 
     try {
-      const res = await fetch('/api/fizik-yildizi', {
+      const res = await apiFetch('/api/fizik-yildizi', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'saveOdev', data: odev })

@@ -1,5 +1,5 @@
 'use client';
-
+import { apiFetch } from '@/lib/fizik-yildizi/apiFetch';
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -139,7 +139,7 @@ export default function AkilliProgramPage() {
       // XP kazanımı
       if (oncekiDurum !== 'tamamlandi' && yeniDurum === 'tamamlandi') {
         const xp = yeniHafta[gunIndex].gorevler[gorevIndex].xp;
-        fetch('/api/fizik-yildizi', {
+        apiFetch('/api/fizik-yildizi', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ action: 'addXp', data: { ogrenciId: kullanici.id, xp } })

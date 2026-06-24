@@ -1,5 +1,5 @@
 'use client';
-
+import { apiFetch } from '@/lib/fizik-yildizi/apiFetch';
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import styles from '@/app/fizik-yildizi/fizik.module.css';
@@ -28,7 +28,7 @@ export default function AdminDashboardPage() {
 
   const fetchStats = async () => {
     try {
-      const res = await fetch('/api/fizik-yildizi', {
+      const res = await apiFetch('/api/fizik-yildizi', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'adminStats' })
@@ -45,7 +45,7 @@ export default function AdminDashboardPage() {
 
   const approveTeacher = async (teacherId: string) => {
     try {
-      await fetch('/api/fizik-yildizi', {
+      await apiFetch('/api/fizik-yildizi', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'approveTeacher', data: { teacherId } })

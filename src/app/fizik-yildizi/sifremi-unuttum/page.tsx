@@ -1,5 +1,5 @@
 'use client';
-
+import { apiFetch } from '@/lib/fizik-yildizi/apiFetch';
 import { useState, useEffect, FormEvent } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -30,7 +30,7 @@ export default function SifremiUnuttumPage() {
 
     setYukleniyor(true);
     try {
-      const res = await fetch('/api/fizik-yildizi', {
+      const res = await apiFetch('/api/fizik-yildizi', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'generateVerifyCode', data: { email: email.trim().toLowerCase() } }),

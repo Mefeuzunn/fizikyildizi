@@ -1,5 +1,5 @@
 'use client';
-
+import { apiFetch } from '@/lib/fizik-yildizi/apiFetch';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -100,7 +100,7 @@ export default function AIDuel({ onExit }: { onExit: () => void }) {
         return;
       }
       try {
-        const res = await fetch('/api/fizik-yildizi');
+        const res = await apiFetch('/api/fizik-yildizi');
         const data = await res.json();
         if (data.success && data.kullanicilar) {
           const classmates = data.kullanicilar

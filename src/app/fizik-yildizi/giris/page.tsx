@@ -1,10 +1,11 @@
 'use client';
-
+import { apiFetch } from '@/lib/fizik-yildizi/apiFetch';
 import { useState, FormEvent } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import styles from '@/app/fizik-yildizi/fizik.module.css';
 import { getKullanicilar, syncWithServer } from '@/lib/fizik-yildizi/db';
+import { Storage } from '@/lib/storage';
 import { useEffect } from 'react';
 
 type Rol = 'ogrenci' | 'ogretmen';
@@ -46,7 +47,7 @@ export default function GirisPage() {
     let kullanici = null;
     let token = '';
     try {
-      const res = await fetch('/api/fizik-yildizi', {
+      const res = await apiFetch('/api/fizik-yildizi', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -70,9 +71,9 @@ export default function GirisPage() {
       return;
     }
 
-    // Store auth in localStorage
-    localStorage.setItem('fizik_token', token);
-    localStorage.setItem('fizik_kullanici', JSON.stringify(kullanici));
+    // Store auth in native storage
+    await Storage.set('fizik_token', token);
+    await Storage.set('fizik_kullanici', kullanici);
 
     setYukleniyor(false);
 

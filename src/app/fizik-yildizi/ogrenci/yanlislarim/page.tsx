@@ -1,5 +1,5 @@
 'use client';
-
+import { apiFetch } from '@/lib/fizik-yildizi/apiFetch';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import FizikNavbar from '@/components/fizik-yildizi/FizikNavbar';
@@ -39,7 +39,7 @@ export default function YanlislarimPage() {
 
     const fetchYanlislar = async () => {
       try {
-        const res = await fetch('/api/fizik-yildizi', {
+        const res = await apiFetch('/api/fizik-yildizi', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ action: 'getYanlisSorular', data: { ogrenciId: k.id } })

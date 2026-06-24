@@ -3,7 +3,9 @@
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
+import { motion, AnimatePresence } from 'framer-motion';
 import styles from '@/app/fizik-yildizi/fizik.module.css';
+import { Storage } from '@/lib/storage';
 
 interface Kullanici {
   id: string;
@@ -51,19 +53,16 @@ export default function FizikNavbar() {
   const navLinks = getNavLinks();
 
   useEffect(() => {
-    const token = localStorage.getItem('fizik_token');
-    const kullaniciBilgi = localStorage.getItem('fizik_kullanici');
-    if (token && kullaniciBilgi) {
-      try {
-        setKullanici(JSON.parse(kullaniciBilgi));
-      } catch {
-        localStorage.removeItem('fizik_token');
-        localStorage.removeItem('fizik_kullanici');
+    const checkAuth = async () => {
+      const token = await Storage.get<string>('fizik_token');
+      const kullaniciBilgi = await Storage.get<Kullanici>('fizik_kullanici');
+      if (token && kullaniciBilgi) {
+        setKullanici(kullaniciBilgi);
+      } else {
         setKullanici(null);
       }
-    } else {
-      setKullanici(null);
-    }
+    };
+    checkAuth();
   }, [pathname]);
 
   // Close dropdown when clicking outside
@@ -83,9 +82,9 @@ export default function FizikNavbar() {
     setDropdownAcik(false);
   }, [pathname]);
 
-  const handleCikis = () => {
-    localStorage.removeItem('fizik_token');
-    localStorage.removeItem('fizik_kullanici');
+  const handleCikis = async () => {
+    await Storage.remove('fizik_token');
+    await Storage.remove('fizik_kullanici');
     setKullanici(null);
     setDropdownAcik(false);
     router.push('/fizik-yildizi');
@@ -231,62 +230,79 @@ export default function FizikNavbar() {
       </nav>
 
       {/* Mobile Menu */}
-      {menuAcik && (
-        <div className={styles.mobileMenu}>
-          {navLinks.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className={`${styles.mobileNavLink} ${isActive(link.href) ? styles.mobileNavLinkActive : ''}`}
+      <AnimatePresence>
+        {menuAcik && (
+          <>
+            <motion.div
+              className={styles.mobileMenuOverlay}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setMenuAcik(false)}
+            />
+            <motion.div
+              className={styles.mobileMenu}
+              initial={{ x: '-100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '-100%' }}
+              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
             >
-              {link.label}
-            </Link>
-          ))}
+              {navLinks.map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className={`${styles.mobileNavLink} ${isActive(link.href) ? styles.mobileNavLinkActive : ''}`}
+                >
+                  {link.label}
+                </Link>
+              ))}
 
-          {kullanici ? (
-            <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
-              <div style={{ padding: '0.5rem 1rem', marginBottom: '0.5rem' }}>
-                <div style={{ fontWeight: 700, color: '#f8fafc' }}>{kullanici.ad} {kullanici.soyad}</div>
-                <div style={{ fontSize: '0.8rem', color: '#64748b' }}>{kullanici.email}</div>
-              </div>
-              {kullanici.rol === 'ogretmen' ? (
-                <>
-                  <Link href="/fizik-yildizi/ogretmen/dashboard" className={styles.mobileNavLink}>📊 Dashboard</Link>
-                  <Link href="/fizik-yildizi/ogretmen/sinif" className={styles.mobileNavLink}>🏫 Sınıflarım</Link>
-                </>
+              {kullanici ? (
+                <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+                  <div style={{ padding: '0.5rem 1rem', marginBottom: '0.5rem' }}>
+                    <div style={{ fontWeight: 700, color: '#f8fafc' }}>{kullanici.ad} {kullanici.soyad}</div>
+                    <div style={{ fontSize: '0.8rem', color: '#64748b' }}>{kullanici.email}</div>
+                  </div>
+                  {kullanici.rol === 'ogretmen' ? (
+                    <>
+                      <Link href="/fizik-yildizi/ogretmen/dashboard" className={styles.mobileNavLink}>📊 Dashboard</Link>
+                      <Link href="/fizik-yildizi/ogretmen/sinif" className={styles.mobileNavLink}>🏫 Sınıflarım</Link>
+                    </>
+                  ) : (
+                    <>
+                      <Link href="/fizik-yildizi/ogrenci/dashboard" className={styles.mobileNavLink}>📊 Dashboard</Link>
+                      <Link href="/fizik-yildizi/ogrenci/analiz" className={styles.mobileNavLink}>📈 Analizim</Link>
+                      <Link href="/fizik-yildizi/ogrenci/sinif-forum" className={styles.mobileNavLink}>💬 Sınıf Forumu</Link>
+                      <Link href="/fizik-yildizi/ogrenci/ligler" className={styles.mobileNavLink}>🏆 Ligler</Link>
+                      <Link href="/fizik-yildizi/ogrenci/duello" className={styles.mobileNavLink}>⚔️ Bilgi Düellosu</Link>
+                    </>
+                  )}
+                  <button
+                    onClick={handleCikis}
+                    style={{
+                      display: 'block', width: '100%', textAlign: 'left',
+                      padding: '0.75rem 1rem', color: '#ef4444', background: 'none',
+                      border: 'none', cursor: 'pointer', fontWeight: 500,
+                      borderRadius: 8, fontSize: '0.9rem'
+                    }}
+                  >
+                    🚪 Çıkış Yap
+                  </button>
+                </div>
               ) : (
-                <>
-                  <Link href="/fizik-yildizi/ogrenci/dashboard" className={styles.mobileNavLink}>📊 Dashboard</Link>
-                  <Link href="/fizik-yildizi/ogrenci/analiz" className={styles.mobileNavLink}>📈 Analizim</Link>
-                  <Link href="/fizik-yildizi/ogrenci/sinif-forum" className={styles.mobileNavLink}>💬 Sınıf Forumu</Link>
-                  <Link href="/fizik-yildizi/ogrenci/ligler" className={styles.mobileNavLink}>🏆 Ligler</Link>
-                  <Link href="/fizik-yildizi/ogrenci/duello" className={styles.mobileNavLink}>⚔️ Bilgi Düellosu</Link>
-                </>
+                <div className={styles.mobileAuthButtons}>
+                  <Link href="/fizik-yildizi/giris" className={styles.btnNavOutline} style={{ justifyContent: 'center' }}>
+                    Giriş
+                  </Link>
+                  <Link href="/fizik-yildizi/kayit" className={styles.btnNavPrimary} style={{ justifyContent: 'center' }}>
+                    ✨ Kayıt Ol
+                  </Link>
+                </div>
               )}
-              <button
-                onClick={handleCikis}
-                style={{
-                  display: 'block', width: '100%', textAlign: 'left',
-                  padding: '0.75rem 1rem', color: '#ef4444', background: 'none',
-                  border: 'none', cursor: 'pointer', fontWeight: 500,
-                  borderRadius: 8, fontSize: '0.9rem'
-                }}
-              >
-                🚪 Çıkış Yap
-              </button>
-            </div>
-          ) : (
-            <div className={styles.mobileAuthButtons}>
-              <Link href="/fizik-yildizi/giris" className={styles.btnNavOutline} style={{ justifyContent: 'center' }}>
-                Giriş
-              </Link>
-              <Link href="/fizik-yildizi/kayit" className={styles.btnNavPrimary} style={{ justifyContent: 'center' }}>
-                ✨ Kayıt Ol
-              </Link>
-            </div>
-          )}
-        </div>
-      )}
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </>
   );
 }

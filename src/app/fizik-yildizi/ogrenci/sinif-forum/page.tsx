@@ -1,5 +1,5 @@
 'use client';
-
+import { apiFetch } from '@/lib/fizik-yildizi/apiFetch';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -105,7 +105,7 @@ export default function SinifForumPage() {
   const loadCevaplar = async (tartisma: Tartisma) => {
     setSeciliTartisma(tartisma);
     try {
-      const res = await fetch('/api/fizik-yildizi?tartisId=' + tartisma.id);
+      const res = await apiFetch('/api/fizik-yildizi?tartisId=' + tartisma.id);
       const data = await res.json();
       if (data.sinifCevaplari) setCevaplar(data.sinifCevaplari);
       else setCevaplar([]);
@@ -133,7 +133,7 @@ export default function SinifForumPage() {
     };
 
     try {
-      await fetch('/api/fizik-yildizi', {
+      await apiFetch('/api/fizik-yildizi', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'saveTartis', data: tartisma })
@@ -188,7 +188,7 @@ export default function SinifForumPage() {
       tarih: new Date().toISOString(),
     };
 
-    await fetch('/api/fizik-yildizi', {
+    await apiFetch('/api/fizik-yildizi', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'saveCevap', data: cevap })
@@ -206,7 +206,7 @@ export default function SinifForumPage() {
   };
 
   const handleUpvote = async (cevap: Cevap) => {
-    await fetch('/api/fizik-yildizi', {
+    await apiFetch('/api/fizik-yildizi', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'upvoteCevap', data: { tartisId: cevap.tartisId, cevapId: cevap.id } })

@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense } from 'react';
 import styles from '@/app/fizik-yildizi/fizik.module.css';
 import { getOgretmenler, saveKullanici } from '@/lib/fizik-yildizi/db';
+import { Storage } from '@/lib/storage';
 
 type Rol = 'ogrenci' | 'ogretmen' | 'veli';
 
@@ -143,10 +144,9 @@ function KayitForm() {
     saveKullanici(kullanici as any);
 
     const token = btoa(`${kullanici.id}:${Date.now()}:fizik_yildizi`);
-    localStorage.setItem('fizik_token', token);
-    localStorage.setItem('fizik_kullanici', JSON.stringify(kullanici));
+    await Storage.set('fizik_token', token);
+    await Storage.set('fizik_kullanici', kullanici);
 
-    setYukleniyor(false);
     setYukleniyor(false);
     if (kullanici.rol === 'ogretmen') {
       router.push('/fizik-yildizi/ogretmen/dashboard');

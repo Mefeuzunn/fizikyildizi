@@ -1,7 +1,9 @@
 import type { ReactNode } from 'react';
 import FizikNavbar from '@/components/fizik-yildizi/FizikNavbar';
 import MobileBottomNav from '@/components/fizik-yildizi/MobileBottomNav';
+import NativeMobileInit from '@/components/fizik-yildizi/NativeMobileInit';
 import styles from './fizik.module.css';
+import PageTransitionWrapper from '@/components/fizik-yildizi/PageTransitionWrapper';
 
 export const metadata = {
   title: {
@@ -33,6 +35,7 @@ const STARS = generateStars(80);
 export default function FizikYildizLayout({ children }: { children: ReactNode }) {
   return (
     <div className={styles.wrapper}>
+      <NativeMobileInit />
       {/* Fixed star field background */}
       <div className={styles.starField} aria-hidden="true">
         {STARS.map((star, i) => (
@@ -57,7 +60,9 @@ export default function FizikYildizLayout({ children }: { children: ReactNode })
 
       {/* Page content */}
       <main className={styles.main}>
-        {children}
+        <PageTransitionWrapper>
+          {children}
+        </PageTransitionWrapper>
       </main>
 
       <MobileBottomNav />

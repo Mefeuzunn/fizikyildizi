@@ -1,5 +1,5 @@
 'use client';
-
+import { apiFetch } from '@/lib/fizik-yildizi/apiFetch';
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import FizikNavbar from '@/components/fizik-yildizi/FizikNavbar';
@@ -52,7 +52,7 @@ export default function MagazaPage() {
     setLoadingId(item.id);
 
     try {
-      const res = await fetch('/api/fizik-yildizi', {
+      const res = await apiFetch('/api/fizik-yildizi', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

@@ -1,5 +1,5 @@
 'use client';
-
+import { apiFetch } from '@/lib/fizik-yildizi/apiFetch';
 import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -88,7 +88,7 @@ export default function OdakOdasiPage() {
 
     if (mode === 'work') {
       // Award XP
-      fetch('/api/fizik-yildizi', {
+      apiFetch('/api/fizik-yildizi', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'addXp', data: { ogrenciId: kullanici.id, xp: 10 } })

@@ -1,5 +1,5 @@
 'use client';
-
+import { apiFetch } from '@/lib/fizik-yildizi/apiFetch';
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, useAnimation, PanInfo } from 'framer-motion';
@@ -106,7 +106,7 @@ export default function FluidFlashcardsPage() {
       k.sonrakiGosterim = Date.now() + (saatGecikme * 60 * 60 * 1000);
       
       // Award XP
-      fetch('/api/fizik-yildizi', {
+      apiFetch('/api/fizik-yildizi', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'addXp', data: { ogrenciId: kullanici.id, xp: 5 } })
