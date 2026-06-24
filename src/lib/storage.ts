@@ -1,23 +1,30 @@
-import { Preferences } from '@capacitor/preferences';
-
 export const Storage = {
   async set(key: string, value: any) {
-    await Preferences.set({
-      key,
-      value: JSON.stringify(value),
-    });
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(key, typeof value === 'string' ? value : JSON.stringify(value));
+    }
   },
 
   async get<T>(key: string): Promise<T | null> {
-    const { value } = await Preferences.get({ key });
-    return value ? JSON.parse(value) as T : null;
+    if (typeof window === 'undefined') return null;
+    const value = localStorage.getItem(key);
+    if (!value) return null;
+    try {
+      return JSON.parse(value) as T;
+    } catch {
+      return value as any;
+    }
   },
 
   async remove(key: string) {
-    await Preferences.remove({ key });
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem(key);
+    }
   },
 
   async clear() {
-    await Preferences.clear();
+    if (typeof window !== 'undefined') {
+      localStorage.clear();
+    }
   }
 };
