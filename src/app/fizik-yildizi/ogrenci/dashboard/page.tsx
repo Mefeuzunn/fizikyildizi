@@ -157,13 +157,17 @@ export default function OgrenciDashboard() {
   const toplamTest = testSonuclari.length;
   const ortalamaPuan = toplamTest > 0 ? Math.round(testSonuclari.reduce((a, b) => a + b.puan, 0) / toplamTest) : 0;
   const gunlukSoru = gunlukSorular[gunlukSoruIndex] || null;
-  const initials = kullanici ? `${kullanici.ad[0]}${kullanici.soyad[0]}` : 'FY';
 
-  if (!kullanici) return (
-    <div style={{ minHeight: '100vh', background: '#050a1a', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <div style={{ width: 48, height: 48, border: '3px solid #7c3aed', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
-    </div>
-  );
+  if (!kullanici) {
+    return (
+      <div style={{ minHeight: '100vh', background: '#09090b', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ width: 48, height: 48, border: '3px solid #7c3aed', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      </div>
+    );
+  }
+
+  const initials = `${kullanici.ad[0]}${kullanici.soyad[0]}`.toUpperCase();
 
   const allowedGrades = 
     kullanici.sinif === 9 ? [9] :
