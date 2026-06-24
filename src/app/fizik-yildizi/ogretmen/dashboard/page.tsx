@@ -26,7 +26,6 @@ import {
   deleteDersIcerigi,
   saveKullanici,
   getKullanicilar,
-  syncWithServer,
   getOgretmenBildirimleri,
   bildirimOnayla,
   bildirimReddet,
@@ -402,19 +401,19 @@ export default function TeacherDashboard() {
     setTimeout(() => setToast(null), 3000);
   };
 
-  const loadData = useCallback(() => {
+  const loadData = useCallback(async () => {
     if (teacher) {
-      const approved = getOnayliOgrenciler(teacher.id);
+      const approved = await getOnayliOgrenciler(teacher.id);
       setOnayliOgrenciler(approved);
-      setOnayBekleyenOgrenciler(getOnayBekleyenOgrenciler(teacher.id));
+      setOnayBekleyenOgrenciler(await getOnayBekleyenOgrenciler(teacher.id));
       
-      const files = getDersIcerikleri().filter(f => f.ogretmenId === teacher.id);
+      const files = (await getDersIcerikleri()).filter(f => f.ogretmenId === teacher.id);
       setSharedFiles(files);
       
-      const tests = getAtananTestler().filter(t => t.ogretmenId === teacher.id);
+      const tests = (await getAtananTestler()).filter(t => t.ogretmenId === teacher.id);
       setAssignedTests(tests);
 
-      setBildirimler(getOgretmenBildirimleri(teacher.id));
+      setBildirimler(await getOgretmenBildirimleri(teacher.id));
 
       // Fetch student results and convert them to report objects
       const allResultsRaw = localStorage.getItem('fizik_test_sonuclari');
@@ -471,7 +470,7 @@ export default function TeacherDashboard() {
         const codes = { 9: 'FY-9XYZ', 10: 'FY-2A3B', 11: 'FY-9C1D', 12: 'FY-7E4F', 13: 'FY-MZ13' };
 
         return {
-          id: `c_${gradeNum}`,
+          id: crypto.randomUUID(),
           name: gradeNum === 13 ? 'Mezun Fizik' : `${gradeNum}. Sınıf Fizik`,
           code: (codes as any)[gradeNum] || 'FY-XXXX',
           studentCount,
@@ -526,11 +525,8 @@ export default function TeacherDashboard() {
     }
 
     const initializeAndSync = async () => {
-      // Synchronize database with SQLite server
-      await syncWithServer();
-
-      // Retrieve synced local state
-      const allUsers = getKullanicilar();
+      // Retrieve from Supabase
+      const allUsers = await getKullanicilar();
       const k = allUsers.find((u: any) => u.id === sessionUser.id) || sessionUser;
 
       setTeacher(k);
@@ -587,8 +583,8 @@ export default function TeacherDashboard() {
       showToast('error', 'Lütfen başlık girin ve bir dosya seçin.');
       return;
     }
-    const newIcerik: DersIcerigi = {
-      id: `content_${Date.now()}`,
+    const newIcerik = {
+      id: crypto.randomUUID(),
       ogretmenId: teacher.id,
       ogretmenAdi: `${teacher.ad} ${teacher.soyad}`,
       sinif: shareClass,
@@ -616,8 +612,8 @@ export default function TeacherDashboard() {
       return;
     }
     const selectedTopic = konular.find(k => k.id === assignTopicId);
-    const newAssignment: AtananTest = {
-      id: `assign_${Date.now()}`,
+    const yeniOdev: AtananTest = {
+      id: crypto.randomUUID(),
       ogretmenId: teacher.id,
       sinif: assignClass,
       konuId: assignTopicId,
@@ -626,7 +622,7 @@ export default function TeacherDashboard() {
       tarih: new Date().toISOString(),
       sonTarih: assignDeadline
     };
-    saveAtananTest(newAssignment);
+    saveAtananTest(yeniOdev);
     setAssignDesc('');
     setAssignDeadline('');
     setShowAssignModal(false);

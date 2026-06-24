@@ -96,10 +96,37 @@ export const apiFetch = async (url: string, options?: RequestInit): Promise<Resp
             }
             break;
           }
-          case 'generateVerifyCode':
+          case 'generateVerifyCode': {
             const kod = Math.floor(100000 + Math.random() * 900000).toString();
             await supabase.from('kullanicilar').update({ dogrulamaKodu: kod }).eq('email', data.email.toLowerCase().trim());
+            
+            try {
+              fetch('/api/email', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  email: data.email.toLowerCase().trim(),
+                  subject: 'Fizik Yıldızı - Doğrulama Kodun',
+                  html: `
+                    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 10px; background: #fafafa;">
+                      <h2 style="color: #4f46e5; text-align: center;">Fizik Yıldızı'na Hoş Geldin! 🚀</h2>
+                      <p style="color: #333; font-size: 16px;">E-posta adresini doğrulamak için aşağıdaki kodu kullanabilirsin:</p>
+                      <div style="background: #e0e7ff; padding: 15px; text-align: center; font-size: 24px; letter-spacing: 5px; font-weight: bold; color: #4338ca; border-radius: 8px; margin: 20px 0;">
+                        ${kod}
+                      </div>
+                      <p style="color: #666; font-size: 14px; text-align: center;">Kodu girerek platformu kullanmaya başlayabilirsin.</p>
+                      <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 30px 0;" />
+                      <p style="color: #999; font-size: 12px; text-align: center;">Eğer bu kaydı sen yapmadıysan, lütfen bu e-postayı dikkate alma.</p>
+                    </div>
+                  `
+                })
+              });
+            } catch (e) {
+              console.error('Failed to dispatch email api:', e);
+            }
+
             return new Response(JSON.stringify({ success: true, kod }));
+          }
           case 'verifyEmail':
             const { data: vk } = await supabase.from('kullanicilar').select('dogrulamaKodu').eq('email', data.email.toLowerCase().trim()).single();
             if (vk && vk.dogrulamaKodu === data.kod) {
@@ -123,17 +150,87 @@ export const apiFetch = async (url: string, options?: RequestInit): Promise<Resp
           case 'createDuel':
             await supabase.from('duellolar').insert(data.duel);
             return new Response(JSON.stringify({ success: true }));
-          case 'joinDuel':
-            await supabase.from('duellolar').update({
-                status: 'active',
-                p2_id: data.p2_id,
-                p2_data: data.p2_data,
-                guncelleme_tarihi: new Date().toISOString()
-            }).eq('id', data.duelId);
-            return new Response(JSON.stringify({ success: true }));
+          case 'joinDuel': {
+            const p1Data = JSON.stringify({ ad: data.ad, avatarRenk: data.avatarRenk });
+            const { data: wd } = await supabase.from('duellolar')
+                .select('*')
+                .eq('status', 'waiting')
+                .eq('lig', data.lig)
+                .eq('sinif', data.sinif || '10A')
+                .neq('p1_id', data.id)
+                .order('olusturma_tarihi', { ascending: true })
+                .limit(1)
+                .single();
+
+            if (wd) {
+                const { data: updated } = await supabase.from('duellolar').update({
+                    status: 'active',
+                    p2_id: data.id,
+                    p2_data: p1Data,
+                    guncelleme_tarihi: new Date().toISOString()
+                }).eq('id', wd.id).select().single();
+                return new Response(JSON.stringify({ success: true, duelId: wd.id, isCreator: false, duel: updated || wd }));
+            } else {
+                const sData = (await import('@/data/fizik-yildizi/sorular')).sorular;
+                const selectedQuestions = sData.sort(() => 0.5 - Math.random()).slice(0, 10);
+                const newDuelId = crypto.randomUUID();
+                const newDuel = {
+                    id: newDuelId,
+                    status: 'waiting',
+                    lig: data.lig,
+                    sinif: data.sinif || '10A',
+                    p1_id: data.id,
+                    p1_data: p1Data,
+                    p2_id: null,
+                    p2_data: null,
+                    sorular: JSON.stringify(selectedQuestions),
+                    p1_cevaplar: '[]',
+                    p2_cevaplar: '[]',
+                    current_question_idx: 0,
+                    olusturma_tarihi: new Date().toISOString(),
+                    guncelleme_tarihi: new Date().toISOString()
+                };
+                const { data: nd } = await supabase.from('duellolar').insert(newDuel).select().single();
+                return new Response(JSON.stringify({ success: true, duelId: newDuelId, isCreator: true, duel: nd || newDuel }));
+            }
+          }
           case 'getDuel': {
             const { data: gd } = await supabase.from('duellolar').select('*').eq('id', data.id).single();
             return new Response(JSON.stringify({ success: true, duel: gd || null }));
+          }
+          case 'pollDuel': {
+            const { data: pd } = await supabase.from('duellolar').select('*').eq('id', data.duelId).single();
+            if (!pd) return new Response(JSON.stringify({ success: false, error: 'Not found' }));
+            
+            let rival = null;
+            if (pd.p1_id === data.userId && pd.p2_data) rival = JSON.parse(pd.p2_data);
+            if (pd.p2_id === data.userId && pd.p1_data) rival = JSON.parse(pd.p1_data);
+            
+            return new Response(JSON.stringify({ success: true, duel: pd, rival }));
+          }
+          case 'advanceDuelQuestion': {
+            const { data: adq } = await supabase.from('duellolar').select('*').eq('id', data.duelId).single();
+            if (!adq) return new Response(JSON.stringify({ success: false }));
+            
+            const p1 = JSON.parse(adq.p1_cevaplar || '[]');
+            const p2 = JSON.parse(adq.p2_cevaplar || '[]');
+            
+            let modified = false;
+            if (p1.length <= adq.current_question_idx) { p1.push(null); modified = true; }
+            if (p2.length <= adq.current_question_idx) { p2.push(null); modified = true; }
+            
+            if (modified) {
+                const nextIdx = adq.current_question_idx + 1;
+                const isFinished = nextIdx >= 3;
+                await supabase.from('duellolar').update({
+                    p1_cevaplar: JSON.stringify(p1),
+                    p2_cevaplar: JSON.stringify(p2),
+                    current_question_idx: nextIdx,
+                    status: isFinished ? 'finished' : adq.status,
+                    guncelleme_tarihi: new Date().toISOString()
+                }).eq('id', data.duelId);
+            }
+            return new Response(JSON.stringify({ success: true }));
           }
           case 'cancelDuel':
             await supabase.from('duellolar').delete().eq('id', data.id);
@@ -143,8 +240,8 @@ export const apiFetch = async (url: string, options?: RequestInit): Promise<Resp
             if (sda) {
                 const p1_answers = JSON.parse(sda.p1_cevaplar || '[]');
                 const p2_answers = JSON.parse(sda.p2_cevaplar || '[]');
-                if (data.playerId === sda.p1_id) p1_answers.push(data.answer);
-                if (data.playerId === sda.p2_id) p2_answers.push(data.answer);
+                if (data.userId === sda.p1_id) p1_answers.push(data.answer);
+                if (data.userId === sda.p2_id) p2_answers.push(data.answer);
                 
                 let nextIdx = sda.current_question_idx;
                 if (p1_answers.length > nextIdx && p2_answers.length > nextIdx) {

@@ -150,8 +150,8 @@ export default function DenemeNaviPage() {
     setPhase('finished');
 
     // Save to localStorage
-    const sonuc = {
-      id: `deneme_${Date.now()}`,
+    const sonuc: any = {
+      id: crypto.randomUUID(),
       ogrenciId: kullanici?.id,
       tur: examType,
       tarih: new Date().toISOString(),

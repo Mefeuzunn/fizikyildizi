@@ -85,35 +85,38 @@ export default function OgrenciProfilPage() {
 
     if (sessionUser.rol !== 'ogrenci') { router.push('/fizik-yildizi/ogretmen/dashboard'); return; }
 
-    // Sync with DB
-    const allUsers = getKullanicilar();
-    const k = allUsers.find((u) => u.id === sessionUser.id) || sessionUser;
-    if (JSON.stringify(k) !== JSON.stringify(sessionUser)) {
-      localStorage.setItem('fizik_kullanici', JSON.stringify(k));
-    }
-
-    setKullanici(k);
-    setAd(k.ad);
-    setSoyad(k.soyad);
-    setSinif(String(k.sinif || 9));
-    setOkulIsmi(k.okulIsmi || '');
-    setOkulNo(k.okulNo || '');
-    setAvatarRenk(k.avatarRenk || '#06b6d4');
-
-    // Compute stats from localStorage test results
-    try {
-      const raw2 = localStorage.getItem('fizik_test_sonuclari');
-      if (raw2) {
-        const sonuclar = JSON.parse(raw2).filter((r: any) => r && r.ogrenciId === k.id);
-        const total = sonuclar.length;
-        const avgScore = total > 0
-          ? Math.round(sonuclar.reduce((s: number, r: any) => s + (r.puan ?? 0), 0) / total)
-          : 0;
-        setStats({ testSayisi: total, ortScore: avgScore, totalXp: (k as any).toplamXp ?? 0 });
-      } else {
-        setStats({ testSayisi: 0, ortScore: 0, totalXp: (k as any).toplamXp ?? 0 });
+    const init = async () => {
+      // Sync with DB
+      const allUsers = await getKullanicilar();
+      const k = allUsers.find((u) => u.id === sessionUser.id) || sessionUser;
+      if (JSON.stringify(k) !== JSON.stringify(sessionUser)) {
+        localStorage.setItem('fizik_kullanici', JSON.stringify(k));
       }
-    } catch { /* ignore */ }
+
+      setKullanici(k);
+      setAd(k.ad);
+      setSoyad(k.soyad);
+      setSinif(String(k.sinif || 9));
+      setOkulIsmi(k.okulIsmi || '');
+      setOkulNo(k.okulNo || '');
+      setAvatarRenk(k.avatarRenk || '#06b6d4');
+
+      // Compute stats from localStorage test results
+      try {
+        const raw2 = localStorage.getItem('fizik_test_sonuclari');
+        if (raw2) {
+          const sonuclar = JSON.parse(raw2).filter((r: any) => r && r.ogrenciId === k.id);
+          const total = sonuclar.length;
+          const avgScore = total > 0
+            ? Math.round(sonuclar.reduce((s: number, r: any) => s + (r.puan ?? 0), 0) / total)
+            : 0;
+          setStats({ testSayisi: total, ortScore: avgScore, totalXp: (k as any).toplamXp ?? 0 });
+        } else {
+          setStats({ testSayisi: 0, ortScore: 0, totalXp: (k as any).toplamXp ?? 0 });
+        }
+      } catch { /* ignore */ }
+    };
+    init();
   }, [router]);
 
   const showToast = (type: 'success' | 'error', msg: string) => {

@@ -92,8 +92,10 @@ function EmailDogrulamaContent() {
           const k = JSON.parse(kData);
           k.mailOnayli = 1;
           localStorage.setItem('fizik_kullanici', JSON.stringify(k));
+          setTimeout(() => router.push(k.rol === 'ogretmen' ? '/fizik-yildizi/ogretmen/dashboard' : k.rol === 'veli' ? '/fizik-yildizi/veli/dashboard' : '/fizik-yildizi/ogrenci/dashboard'), 2500);
+        } else {
+          setTimeout(() => router.push('/fizik-yildizi/giris'), 2500);
         }
-        setTimeout(() => router.push('/fizik-yildizi/ogrenci'), 2500);
       } else {
         setDurum('hata');
         setHataMsg('Kod hatalı. Lütfen tekrar dene.');

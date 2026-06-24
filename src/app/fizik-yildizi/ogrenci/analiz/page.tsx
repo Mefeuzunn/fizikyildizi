@@ -133,12 +133,12 @@ export default function AnalizPage() {
 
   // Radar chart data covering 6 fundamental dimensions
   const radarData = [
-    { subject: 'Mekanik', A: 75, fullMark: 100 },
-    { subject: 'Termodinamik', A: 85, fullMark: 100 },
-    { subject: 'Dalgalar', A: 60, fullMark: 100 },
-    { subject: 'Optik', A: 50, fullMark: 100 },
-    { subject: 'Elektrik', A: 70, fullMark: 100 },
-    { subject: 'Manyetizma', A: 45, fullMark: 100 },
+    { subject: 'Mekanik', A: 0, fullMark: 100 },
+    { subject: 'Termodinamik', A: 0, fullMark: 100 },
+    { subject: 'Dalgalar', A: 0, fullMark: 100 },
+    { subject: 'Optik', A: 0, fullMark: 100 },
+    { subject: 'Elektrik', A: 0, fullMark: 100 },
+    { subject: 'Manyetizma', A: 0, fullMark: 100 },
   ];
 
   // Adjust radar chart weights dynamically if real data matches
@@ -229,7 +229,7 @@ export default function AnalizPage() {
 
   // --- YKS Score Projection ---
   const tytSolved = finalSolved.filter(s => s.details.sinif === 9 || s.details.sinif === 10);
-  const tytSuccessRate = tytSolved.length > 0 ? (tytSolved.filter(s => s.dogruMu).length / tytSolved.length) : 0.75;
+  const tytSuccessRate = tytSolved.length > 0 ? (tytSolved.filter(s => s.dogruMu).length / tytSolved.length) : 0;
   let projectedTytNet = 7 * tytSuccessRate;
   const tytMocks = denemeSonuclar.filter(d => d.tur === 'TYT');
   if (tytMocks.length > 0) {
@@ -239,7 +239,7 @@ export default function AnalizPage() {
   projectedTytNet = Math.max(0, Math.min(7, projectedTytNet));
 
   const aytSolved = finalSolved.filter(s => s.details.sinif === 11 || s.details.sinif === 12);
-  const aytSuccessRate = aytSolved.length > 0 ? (aytSolved.filter(s => s.dogruMu).length / aytSolved.length) : 0.60;
+  const aytSuccessRate = aytSolved.length > 0 ? (aytSolved.filter(s => s.dogruMu).length / aytSolved.length) : 0;
   let projectedAytNet = 14 * aytSuccessRate;
   const aytMocks = denemeSonuclar.filter(d => d.tur === 'AYT');
   if (aytMocks.length > 0) {
@@ -249,8 +249,10 @@ export default function AnalizPage() {
   projectedAytNet = Math.max(0, Math.min(14, projectedAytNet));
 
   const totalProjected = projectedTytNet + projectedAytNet;
-  let percentileStr = "İlk %2.5";
-  if (totalProjected >= 19) percentileStr = "İlk %0.3 (Derece Hedefi)";
+  let percentileStr = "Henüz Tahmin Yok";
+  if (totalProjected === 0 && finalSolved.length === 0) {
+      percentileStr = "Veri Bekleniyor";
+  } else if (totalProjected >= 19) percentileStr = "İlk %0.3 (Derece Hedefi)";
   else if (totalProjected >= 17) percentileStr = "İlk %1.2 (Çok Başarılı)";
   else if (totalProjected >= 15) percentileStr = "İlk %3.5";
   else if (totalProjected >= 12) percentileStr = "İlk %8.0";

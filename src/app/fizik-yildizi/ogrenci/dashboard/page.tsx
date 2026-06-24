@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import { konular } from '@/data/fizik-yildizi/konular';
-import { getAtananTestler, getDersIcerikleri, getKullanicilar, syncWithServer, AtananTest, DersIcerigi } from '@/lib/fizik-yildizi/db';
+import { getAtananTestler, getDersIcerikleri, getKullanicilar, AtananTest, DersIcerigi } from '@/lib/fizik-yildizi/db';
 
 const AstroTutor = dynamic(() => import('@/components/fizik-yildizi/AstroTutor'), { ssr: false });
 import YksSayaci from '@/components/fizik-yildizi/YksSayaci';
@@ -97,11 +97,8 @@ export default function OgrenciDashboard() {
     if (sessionUser.rol !== 'ogrenci') { router.push('/fizik-yildizi/ogretmen/dashboard'); return; }
     
     const initializeAndSync = async () => {
-      // Synchronize database with SQLite server
-      await syncWithServer();
-
       // Retrieve synced local state
-      const allUsers = getKullanicilar();
+      const allUsers = await getKullanicilar();
       const k = allUsers.find(u => u.id === sessionUser.id) || sessionUser;
 
       setKullanici(k);
@@ -124,12 +121,12 @@ export default function OgrenciDashboard() {
 
       // Fetch assigned tests matching student's class
       if (k.sinif) {
-        const allTests = getAtananTestler();
+        const allTests = await getAtananTestler();
         const classTests = allTests.filter(t => t.sinif === k.sinif);
         setAtananTestler(classTests);
 
         // Fetch shared files matching student's class
-        const allFiles = getDersIcerikleri();
+        const allFiles = await getDersIcerikleri();
         const classFiles = allFiles.filter(f => f.sinif === k.sinif);
         setDersIcerikleri(classFiles);
       }

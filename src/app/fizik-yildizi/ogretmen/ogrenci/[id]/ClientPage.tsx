@@ -214,54 +214,57 @@ export default function StudentDetailPage(props: { params: Promise<{ id: string 
   const [suggestedTopic, setSuggestedTopic] = useState('');
 
   useEffect(() => {
-    const users = getKullanicilar();
-    const found = users.find(u => u.id === params.id && u.rol === 'ogrenci');
-    if (found) {
-      setStudent({
-        id: found.id,
-        name: `${found.ad} ${found.soyad}`,
-        class: `${found.sinif || 9}-A`,
-        schoolNo: found.okulNo || '—',
-        joinDate: found.kayitTarihi ? new Date(found.kayitTarihi).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short', year: 'numeric' }) : '—',
-        totalTests: 15,
-        successRate: 74,
-        studyHours: 22,
-        topicsCompleted: 4,
-        radarData: [
-          { topic: 'Kuvvet', score: 82 }, { topic: 'Hareket', score: 75 }, { topic: 'Enerji', score: 80 },
-          { topic: 'Dalgalar', score: 70 }, { topic: 'Optik', score: 65 }, { topic: 'Elektrik', score: 72 },
-        ],
-        trendData: [
-          { week: 'Hf.1', score: 65 }, { week: 'Hf.2', score: 68 }, { week: 'Hf.3', score: 70 },
-          { week: 'Hf.4', score: 74 },
-        ],
-        topicRows: [
-          { topic: 'Kuvvet ve Hareket', tests: 6, avgScore: 75, status: 'Orta' },
-          { topic: 'Enerji ve İş', tests: 4, avgScore: 80, status: 'İyi' },
-          { topic: 'Elektrik', tests: 3, avgScore: 72, status: 'Orta' },
-          { topic: 'Dalgalar', tests: 2, avgScore: 70, status: 'Orta' },
-        ],
-        wrongTypes: [
-          { type: 'Formül Uygulama', count: 6 },
-          { type: 'Hesap Hatası', count: 4 },
-        ],
-        recentTests: [
-          { date: '9 Haz 2026', score: 80, topic: 'Enerji', totalQ: 10, correct: 8, questions: [] },
-          { date: '6 Haz 2026', score: 70, topic: 'Elektrik', totalQ: 10, correct: 7, questions: [] },
-        ],
-      });
-    } else {
-      const sample = STUDENTS[params.id];
-      if (sample) {
-        setStudent(sample);
-      } else {
+    const loadUser = async () => {
+      const users = await getKullanicilar();
+      const found = users.find(u => u.id === params.id && u.rol === 'ogrenci');
+      if (found) {
         setStudent({
-          ...DEFAULT_STUDENT,
-          id: params.id,
-          name: `Öğrenci #${params.id}`,
+          id: found.id,
+          name: `${found.ad} ${found.soyad}`,
+          class: `${found.sinif || 9}-A`,
+          schoolNo: found.okulNo || '—',
+          joinDate: found.kayitTarihi ? new Date(found.kayitTarihi).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short', year: 'numeric' }) : '—',
+          totalTests: 15,
+          successRate: 74,
+          studyHours: 22,
+          topicsCompleted: 4,
+          radarData: [
+            { topic: 'Kuvvet', score: 82 }, { topic: 'Hareket', score: 75 }, { topic: 'Enerji', score: 80 },
+            { topic: 'Dalgalar', score: 70 }, { topic: 'Optik', score: 65 }, { topic: 'Elektrik', score: 72 },
+          ],
+          trendData: [
+            { week: 'Hf.1', score: 65 }, { week: 'Hf.2', score: 68 }, { week: 'Hf.3', score: 70 },
+            { week: 'Hf.4', score: 74 },
+          ],
+          topicRows: [
+            { topic: 'Kuvvet ve Hareket', tests: 6, avgScore: 75, status: 'Orta' },
+            { topic: 'Enerji ve İş', tests: 4, avgScore: 80, status: 'İyi' },
+            { topic: 'Elektrik', tests: 3, avgScore: 72, status: 'Orta' },
+            { topic: 'Dalgalar', tests: 2, avgScore: 70, status: 'Orta' },
+          ],
+          wrongTypes: [
+            { type: 'Formül Uygulama', count: 6 },
+            { type: 'Hesap Hatası', count: 4 },
+          ],
+          recentTests: [
+            { date: '9 Haz 2026', score: 80, topic: 'Enerji', totalQ: 10, correct: 8, questions: [] },
+            { date: '6 Haz 2026', score: 70, topic: 'Elektrik', totalQ: 10, correct: 7, questions: [] },
+          ],
         });
+      } else {
+        const sample = STUDENTS[params.id];
+        if (sample) {
+          setStudent(sample);
+        } else {
+          setStudent({
+            ...DEFAULT_STUDENT,
+            id: params.id,
+            name: `Öğrenci #${params.id}`,
+          });
+        }
       }
-    }
+    };
+    loadUser();
   }, [params.id]);
 
   if (!student) {

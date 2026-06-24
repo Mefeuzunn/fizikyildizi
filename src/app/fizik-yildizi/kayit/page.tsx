@@ -66,7 +66,7 @@ function KayitForm() {
   const [ogretmenListesi, setOgretmenListesi] = useState<any[]>([]);
 
   useEffect(() => {
-    setOgretmenListesi(getOgretmenler());
+    getOgretmenler().then(setOgretmenListesi);
   }, []);
 
   const [ogretmenForm, setOgretmenForm] = useState<OgretmenForm>({
@@ -117,7 +117,7 @@ function KayitForm() {
     const form = rol === 'ogrenci' ? ogrenciForm : rol === 'ogretmen' ? ogretmenForm : veliForm;
 
     const kullanici = {
-      id: `${rol}_${Date.now()}`,
+      id: crypto.randomUUID(),
       ad: form.ad.trim(),
       soyad: form.soyad.trim(),
       email: form.email.trim().toLowerCase(),
@@ -140,8 +140,13 @@ function KayitForm() {
       avatarRenk: rol === 'ogrenci' ? '#06b6d4' : rol === 'ogretmen' ? '#7c3aed' : '#10b981',
     };
 
-    // Save to local registry database
-    saveKullanici(kullanici as any);
+    // Save to database
+    const success = await saveKullanici(kullanici as any);
+    if (!success) {
+       setHata('Sunucu bağlantı hatası. Lütfen tekrar deneyin.');
+       setYukleniyor(false);
+       return;
+    }
 
     const token = btoa(`${kullanici.id}:${Date.now()}:fizik_yildizi`);
     await Storage.set('fizik_token', token);

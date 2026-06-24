@@ -3,6 +3,7 @@ import { apiFetch } from '@/lib/fizik-yildizi/apiFetch';
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { updateXp } from '@/lib/fizik-yildizi/db';
+import { supabase } from '@/lib/fizik-yildizi/supabase';
 import styles from '@/app/fizik-yildizi/fizik.module.css';
 
 interface DuelData {
@@ -41,6 +42,7 @@ export default function RealDuel({ onExit, onAutoBot }: { onExit: () => void, on
 
   const pollInterval = useRef<NodeJS.Timeout | null>(null);
   const timerInterval = useRef<NodeJS.Timeout | null>(null);
+  const channelRef = useRef<any>(null);
 
   useEffect(() => {
     const kData = localStorage.getItem('fizik_kullanici');
@@ -55,8 +57,10 @@ export default function RealDuel({ onExit, onAutoBot }: { onExit: () => void, on
     joinDuel(k);
 
     return () => {
-      if (pollInterval.current) clearInterval(pollInterval.current);
       if (timerInterval.current) clearInterval(timerInterval.current);
+      if (channelRef.current) {
+        supabase.removeChannel(channelRef.current);
+      }
     };
   }, [router]);
 
@@ -85,20 +89,33 @@ export default function RealDuel({ onExit, onAutoBot }: { onExit: () => void, on
   };
 
   const startPolling = (duelId: number, userId: number) => {
-    pollInterval.current = setInterval(async () => {
-      try {
-        const res = await apiFetch('/api/fizik-yildizi', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'pollDuel', data: { duelId, userId } })
-        });
-        const data = await res.json();
-        if (data.success) {
-          if (data.duel) setDuel(data.duel);
-          if (data.rival) setRival(data.rival);
-        }
-      } catch {}
-    }, 1000);
+    // Initial fetch to get immediate state
+    apiFetch('/api/fizik-yildizi', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'pollDuel', data: { duelId, userId } })
+    }).then(r => r.json()).then(data => {
+      if (data.success) {
+        if (data.duel) setDuel(data.duel);
+        if (data.rival) setRival(data.rival);
+      }
+    }).catch(() => {});
+
+    // Subscribe to realtime changes using Supabase Websockets
+    const channel = supabase.channel(`duel_${duelId}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'duellolar', filter: `id=eq.${duelId}` }, (payload) => {
+        const pd = payload.new as any;
+        if (!pd || Object.keys(pd).length === 0) return; // Might be delete event
+        setDuel(pd);
+        
+        let rivalInfo = null;
+        if (pd.p1_id === userId && pd.p2_data) rivalInfo = JSON.parse(pd.p2_data);
+        if (pd.p2_id === userId && pd.p1_data) rivalInfo = JSON.parse(pd.p1_data);
+        if (rivalInfo) setRival(rivalInfo);
+      })
+      .subscribe();
+      
+    channelRef.current = channel;
   };
 
   // Handle waiting time

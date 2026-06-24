@@ -119,7 +119,7 @@ export default function SinifForumPage() {
     setGondermeyukleniyor(true);
 
     const tartisma: Tartisma = {
-      id: `tartis_${Date.now()}_${kullanici.id}`,
+      id: crypto.randomUUID(),
       ogrenciId: kullanici.id,
       ogrenciAdi: `${kullanici.ad} ${kullanici.soyad}`,
       ogrenciAvatarRenk: kullanici.avatarRenk || '#6366f1',
@@ -176,7 +176,7 @@ export default function SinifForumPage() {
     }
 
     const cevap: Cevap = {
-      id: `cevap_${Date.now()}_${kullanici.id}`,
+      id: crypto.randomUUID(),
       tartisId: seciliTartisma.id,
       yazarId: kullanici.id,
       yazarAdi: `${kullanici.ad} ${kullanici.soyad}`,

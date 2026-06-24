@@ -4,7 +4,8 @@ import { useState, FormEvent } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import styles from '@/app/fizik-yildizi/fizik.module.css';
-import { getKullanicilar, syncWithServer } from '@/lib/fizik-yildizi/db';
+import { getKullanicilar } from '@/lib/fizik-yildizi/db';
+import { supabase } from '@/lib/fizik-yildizi/supabase';
 import { Storage } from '@/lib/storage';
 import { useEffect } from 'react';
 
@@ -21,7 +22,7 @@ export default function GirisPage() {
   const [sifreGoster, setSifreGoster] = useState(false);
 
   useEffect(() => {
-    syncWithServer();
+    // Initial load checks if needed
   }, []);
 
   const handleGiris = async (e: FormEvent) => {
@@ -47,23 +48,22 @@ export default function GirisPage() {
     let kullanici = null;
     let token = '';
     try {
-      const res = await apiFetch('/api/fizik-yildizi', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'login',
-          data: { email: email.trim().toLowerCase(), sifre, rol }
-        })
-      });
-      const resData = await res.json();
-      if (resData.success) {
-        kullanici = resData.kullanici;
-        token = resData.token;
-      } else {
-        setHata(resData.message || 'Hatalı e-posta veya şifre.');
+      const { data, error } = await supabase
+        .from('kullanicilar')
+        .select('*')
+        .eq('email', email.trim().toLowerCase())
+        .eq('sifre', sifre)
+        .single();
+        
+      if (error || !data) {
+        setHata('Hatalı e-posta veya şifre.');
         setYukleniyor(false);
         return;
       }
+      
+      kullanici = data;
+      token = btoa(`${kullanici.id}:${Date.now()}:fizik_yildizi`);
+      
     } catch (e) {
       console.error('Server login error:', e);
       setHata('Sunucu bağlantı hatası.');
@@ -80,6 +80,8 @@ export default function GirisPage() {
     // Redirect to appropriate dashboard
     if (kullanici.rol === 'ogretmen') {
       router.push('/fizik-yildizi/ogretmen/dashboard');
+    } else if (kullanici.rol === 'veli') {
+      router.push('/fizik-yildizi/veli/dashboard');
     } else {
       router.push('/fizik-yildizi/ogrenci/dashboard');
     }
@@ -163,39 +165,7 @@ export default function GirisPage() {
           className={styles.glassCardNohover}
           style={{ padding: '2rem', boxShadow: '0 30px 60px rgba(0,0,0,0.4)' }}
         >
-          {/* Role tabs */}
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: '1fr 1fr',
-            gap: '0.4rem',
-            background: 'rgba(255,255,255,0.04)',
-            borderRadius: '12px',
-            padding: '0.3rem',
-            marginBottom: '1.75rem',
-          }}>
-            {(['ogrenci', 'ogretmen'] as Rol[]).map((r) => (
-              <button
-                key={r}
-                onClick={() => { setRol(r); setHata(''); }}
-                style={{
-                  padding: '0.65rem',
-                  borderRadius: '9px',
-                  border: 'none',
-                  cursor: 'pointer',
-                  fontWeight: 600,
-                  fontSize: '0.9rem',
-                  transition: 'all 0.2s',
-                  background: rol === r
-                    ? 'linear-gradient(135deg, #7c3aed, #06b6d4)'
-                    : 'transparent',
-                  color: rol === r ? 'white' : '#64748b',
-                  boxShadow: rol === r ? '0 4px 15px rgba(124,58,237,0.3)' : 'none',
-                }}
-              >
-                {r === 'ogrenci' ? '🎓 Öğrenci' : '📚 Öğretmen'}
-              </button>
-            ))}
-          </div>
+          {/* Role tabs hidden since role is auto-detected */}
 
           {/* Form */}
           <form onSubmit={handleGiris} style={{ display: 'flex', flexDirection: 'column', gap: '1.1rem' }}>

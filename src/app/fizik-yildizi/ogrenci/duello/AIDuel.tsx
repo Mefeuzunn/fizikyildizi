@@ -332,7 +332,7 @@ export default function AIDuel({ onExit }: { onExit: () => void }) {
 
     // Save history
     const record: DuelHistory = {
-      id: `duel_${Date.now()}`,
+      id: crypto.randomUUID(),
       tarih: new Date().toISOString(),
       rakipAd: matchedRival!.ad,
       rakipAvatarRenk: matchedRival!.avatarRenk,
